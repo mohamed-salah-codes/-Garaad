@@ -1,13 +1,7 @@
 import { useMemo, useState } from 'react'
+import KanbanBoard, { type KanbanColumnLegacy } from './components/KanbanBoard'
 
-type PageKey =
-  | 'dashboard'
-  | 'calendar'
-  | 'projects'
-  | 'notes'
-  | 'settings'
-  | 'connected'
-  | 'requests'
+type PageKey = 'projects' | 'tasks' | 'calendar' | 'notes' | 'settings'
 
 type NoteItem = {
   id: string
@@ -42,12 +36,11 @@ type TaskItem = {
   subtasks: Subtask[]
 }
 
-const sidebarItems: Array<{ key: PageKey; label: string; icon: string }> = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'home' },
-  { key: 'calendar', label: 'Calendar Planner', icon: 'calendar' },
-  { key: 'projects', label: 'Projects', icon: 'grid' },
-  { key: 'notes', label: 'Notes', icon: 'note' },
-  { key: 'settings', label: 'Settings', icon: 'settings' },
+const projectSections: Array<{ key: PageKey; label: string }> = [
+  { key: 'tasks', label: 'Tasks' },
+  { key: 'calendar', label: 'Calendar' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'settings', label: 'Settings' },
 ]
 
 const notesSeed: NoteItem[] = [
@@ -159,19 +152,6 @@ const initialTasks: TaskItem[] = [
   },
 ]
 
-const connectedApps = [
-  { name: 'Google Calendar', description: 'Sync meetings and planner timelines.', enabled: true },
-  { name: 'Slack', description: 'Receive team notifications and updates.', enabled: false },
-  { name: 'Trello', description: 'Sync project boards and status cards.', enabled: true },
-  { name: 'Notion', description: 'Link notes and docs to workspace projects.', enabled: false },
-]
-
-const requests = [
-  { id: 'r1', title: 'New calendar integration', requester: 'Dina H.', status: 'Pending', date: 'Today' },
-  { id: 'r2', title: 'Client onboarding update', requester: 'Khaled M.', status: 'Approved', date: 'May 27' },
-  { id: 'r3', title: 'Add meeting notes template', requester: 'Sara A.', status: 'Pending', date: 'May 28' },
-]
-
 const projectItems = [
   {
     id: 'p1',
@@ -196,29 +176,36 @@ const projectItems = [
   },
 ]
 
-const kanbanColumns = [
-  { name: 'New Task', color: '#c8d9ff', tasks: ['Design planner filter', 'Draft notes categories'] },
-  { name: 'Scheduled', color: '#fcdbcf', tasks: ['Sync calendar events', 'Prep meeting agenda'] },
-  { name: 'In Progress', color: '#d2f8d2', tasks: ['Build kanban board', 'Write project summary'] },
-  { name: 'Completed', color: '#e9d7ff', tasks: ['Launch workspace settings'] },
+const statusColumnMetadata: Array<{ name: TaskItem['status']; color: string }> = [
+  { name: 'New Task', color: '#c8d9ff' },
+  { name: 'Scheduled', color: '#fcdbcf' },
+  { name: 'In Progress', color: '#d2f8d2' },
+  { name: 'Completed', color: '#e9d7ff' },
 ]
 
+const getKanbanColumnsFromTasks = (taskList: TaskItem[]): KanbanColumnLegacy[] =>
+  statusColumnMetadata.map((meta) => ({
+    id: meta.name.toLowerCase().replace(/\s+/g, '-'),
+    name: meta.name,
+    color: meta.color,
+    tasks: taskList
+      .filter((task) => task.status === meta.name)
+      .map((task) => ({ id: task.id, title: task.title, label: task.type })),
+  }))
+
 function App() {
-  const [activePage, setActivePage] = useState<PageKey>('dashboard')
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [activePage, setActivePage] = useState<PageKey>('tasks')
+  const [selectedProjectId, setSelectedProjectId] = useState(projectItems[0]?.id ?? '')
   const [calendarMode, setCalendarMode] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly')
-  const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Table')
+  const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Kanban')
   const [notes, setNotes] = useState<NoteItem[]>(notesSeed)
   const [selectedNoteId, setSelectedNoteId] = useState(notesSeed[0].id)
   const [noteSearch, setNoteSearch] = useState('')
   const [noteCategory, setNoteCategory] = useState('All')
-  const [requestFilter, setRequestFilter] = useState<'All' | 'Pending' | 'Approved'>('All')
-  const [requestSearch, setRequestSearch] = useState('')
   const [themeMode, setThemeMode] = useState<'Light' | 'Dark'>('Light')
-  const [connected, setConnected] = useState(connectedApps)
   const [tasks, setTasks] = useState(initialTasks)
-  const [selectedTaskId, setSelectedTaskId] = useState(initialTasks[0]?.id ?? '')
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const kanbanColumns = useMemo(() => getKanbanColumnsFromTasks(tasks), [tasks])
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [newTaskStatus, setNewTaskStatus] = useState<TaskItem['status']>('New Task')
@@ -228,6 +215,11 @@ function App() {
   const [newTaskTags, setNewTaskTags] = useState<string[]>([])
   const [newSubtask, setNewSubtask] = useState('')
   const [newTaskSubtasks, setNewTaskSubtasks] = useState<Subtask[]>([])
+
+  const selectedProject = useMemo(
+    () => projectItems.find((project) => project.id === selectedProjectId),
+    [selectedProjectId],
+  )
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedNoteId) ?? notes[0],
@@ -247,17 +239,6 @@ function App() {
   const statusOptions: TaskItem['status'][] = ['New Task', 'Scheduled', 'In Progress', 'Completed']
   const priorityOptions: TaskItem['priority'][] = ['None', 'Critical', 'High', 'Medium', 'Low', 'Lowest']
 
-  const filteredRequests = useMemo(
-    () =>
-      requests.filter(
-        (item) =>
-          (requestFilter === 'All' || item.status === requestFilter) &&
-          item.title.toLowerCase().includes(requestSearch.toLowerCase()),
-      ),
-    [requestFilter, requestSearch],
-  )
-
-  const selectedTask = useMemo(() => tasks.find((task) => task.id === selectedTaskId) ?? tasks[0], [tasks, selectedTaskId])
 
   const handleNoteChange = (value: string) => {
     setNotes((current) =>
@@ -330,157 +311,99 @@ function App() {
       subtasks: newTaskSubtasks,
     }
     setTasks((current) => [newTask, ...current])
-    setSelectedTaskId(newTask.id)
     setShowTaskModal(false)
   }
 
-  const dragStart = (event: React.DragEvent<HTMLDivElement>, title: string) => {
-    event.dataTransfer.setData('text/plain', title)
-  }
+  const handleKanbanColumnsChange = (newColumns: KanbanColumnLegacy[]) => {
+    setTasks((current) => {
+      const taskMap = new Map(current.map((task) => [task.id, task]))
+      const orderedTasks: TaskItem[] = []
 
-  const dragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-  }
+      for (const column of newColumns) {
+        for (const taskItem of column.tasks) {
+          const existingTask = taskMap.get(taskItem.id)
+          if (existingTask) {
+            orderedTasks.push({
+              ...existingTask,
+              status: column.name as TaskItem['status'],
+            })
+          }
+        }
+      }
 
-  const dropTask = (event: React.DragEvent<HTMLDivElement>, targetColumn: string) => {
-    event.preventDefault()
-    const taskTitle = event.dataTransfer.getData('text/plain')
-    if (!taskTitle) return
-    alert(`Moved \"${taskTitle}\" to ${targetColumn}`)
-  }
+      const remainingTasks = current.filter(
+        (task) => !orderedTasks.some((ordered) => ordered.id === task.id),
+      )
 
-  const toggleApp = (key: string) => {
-    setConnected((current) => current.map((app) => (app.name === key ? { ...app, enabled: !app.enabled } : app)))
+      return [...orderedTasks, ...remainingTasks]
+    })
   }
-
-  const pageTitle = {
-    dashboard: 'Dashboard',
-    calendar: 'Calendar Planner',
-    projects: 'Projects',
-    notes: 'Notes',
-    settings: 'Settings',
-    connected: 'Connected Apps',
-    requests: 'Requests',
-  }[activePage]
 
   return (
-    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${themeMode === 'Dark' ? 'dark-mode' : ''}`}>
+    <div className={`app-shell ${themeMode === 'Dark' ? 'dark-mode' : ''}`}>
       <aside className="sidebar">
-        <div className="sidebar-top">
-          <div className="brand">
-            <div className="brand-sigil">G</div>
-            <div>
-              <strong>Garaad</strong>
-              <span>Workspace</span>
-            </div>
+        <div className="sidebar-profile">
+          <div className="profile-avatar">M</div>
+          <div className="profile-meta">
+            <div className="profile-title">My work</div>
+            <div className="profile-subtitle">Project management</div>
           </div>
-          <button className="sidebar-toggle" onClick={() => setSidebarCollapsed((value) => !value)}>
-            {sidebarCollapsed ? 'Expand' : 'Collapse'}
-          </button>
         </div>
 
-        <div className="sidebar-section">
-          <span className="sidebar-heading">WORKSPACE</span>
-          <nav className="menu">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.key}
-              className={`menu-item ${activePage === item.key ? 'active' : ''}`}
-              onClick={() => setActivePage(item.key)}
-            >
-              <span className={`menu-icon icon-${item.icon}`} />
-              <span>{item.label}</span>
+        <div className="sidebar-section project-list-section">
+          <div className="section-header">
+            <span>Projects</span>
+            <button type="button" className="icon-button" aria-label="New project">
+              +
             </button>
-          ))}
-        </nav>
+          </div>
+
+          <div className="project-list">
+            {projectItems.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                className={`project-link ${selectedProjectId === project.id ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedProjectId(project.id)
+                  setActivePage('tasks')
+                }}
+              >
+                <span>{project.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 
       <div className="content">
         <header className="topbar">
           <div>
-            <p className="breadcrumb">Workspace / {pageTitle}</p>
-            <h1>{pageTitle}</h1>
+            <p className="breadcrumb">Project / {selectedProject?.name ?? 'Select a project'}</p>
+            <h1>{selectedProject?.name ?? 'Select a project'}</h1>
           </div>
           <div className="topbar-actions">
             <button className="ghost-button">Search notes</button>
-            <button className="primary-button" onClick={activePage === 'projects' ? openCreateTask : undefined}>
-              {activePage === 'projects' ? 'New task' : 'New item'}
+            <button className="primary-button" onClick={activePage === 'tasks' ? openCreateTask : undefined}>
+              {activePage === 'tasks' ? 'New task' : 'New item'}
             </button>
           </div>
         </header>
 
-        <section className="page-body">
-          {activePage === 'dashboard' && (
-            <>
-              <div className="summary-grid">
-                <article className="card accent-card">
-                  <div className="card-title">Weekly planner</div>
-                  <div className="card-value">12 meetings</div>
-                  <p>All tasks and events synced with Google Calendar.</p>
-                </article>
-                <article className="card accent-card soft">
-                  <div className="card-title">Projects active</div>
-                  <div className="card-value">3 ongoing</div>
-                  <p>Track progress for priority milestones.</p>
-                </article>
-                <article className="card accent-card soft">
-                  <div className="card-title">Notes saved</div>
-                  <div className="card-value">18 files</div>
-                  <p>Drafts and meeting notes ready to review.</p>
-                </article>
-              </div>
+        <div className="project-menu">
+          {projectSections.map((section) => (
+            <button
+              key={section.key}
+              type="button"
+              className={`project-nav-button ${activePage === section.key ? 'active' : ''}`}
+              onClick={() => setActivePage(section.key)}
+            >
+              {section.label}
+            </button>
+          ))}
+        </div>
 
-              <div className="dashboard-grid">
-                <div className="card panel">
-                  <div className="panel-header">
-                    <h2>Today’s schedule</h2>
-                    <span>Daily view</span>
-                  </div>
-                  <div className="schedule-list">
-                    <div className="schedule-item">
-                      <span>09:00</span>
-                      <div>
-                        <strong>Team Standup</strong>
-                        <p>Sync on planner updates.</p>
-                      </div>
-                    </div>
-                    <div className="schedule-item">
-                      <span>11:30</span>
-                      <div>
-                        <strong>Client review</strong>
-                        <p>Calendar integration demo.</p>
-                      </div>
-                    </div>
-                    <div className="schedule-item">
-                      <span>14:00</span>
-                      <div>
-                        <strong>Design critique</strong>
-                        <p>Finalize notes system layout.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="card panel">
-                  <div className="panel-header">
-                    <h2>Project snapshot</h2>
-                    <span>Active boards</span>
-                  </div>
-                  <div className="project-summary">
-                    {projectItems.map((project) => (
-                      <div key={project.id} className="project-pill">
-                        <div>
-                          <strong>{project.name}</strong>
-                          <small>{project.status}</small>
-                        </div>
-                        <span>{project.progress}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+        <section className="page-body">
 
           {activePage === 'calendar' && (
             <div className="planner-grid">
@@ -571,65 +494,80 @@ function App() {
             </div>
           )}
 
-          {activePage === 'projects' && (
+          {activePage === 'tasks' && (
             <>
-              <div className="project-header-row">
-                <div>
-                  <div className="stats-pill">
-                    <strong>{tasks.length} active tasks</strong>
-                  </div>
-                  <div className="stats-pill soft">
-                    <strong>78% completion</strong>
-                  </div>
+              <div className="tasks-topbar">
+                <div className="tasks-topbar-left">
+                  <button className="primary-button" onClick={openCreateTask}>Add new</button>
+                  <button
+                    type="button"
+                    className={`ghost-button ${projectView === 'Table' ? 'active' : ''}`}
+                    onClick={() => setProjectView('Table')}
+                  >
+                    Table view
+                  </button>
+                  <button
+                    type="button"
+                    className={`ghost-button ${projectView === 'Kanban' ? 'active' : ''}`}
+                    onClick={() => setProjectView('Kanban')}
+                  >
+                    Workflow Board
+                  </button>
                 </div>
-                <div className="view-switcher">
-                  {(['Table', 'Kanban'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      className={projectView === mode ? 'active' : ''}
-                      onClick={() => setProjectView(mode)}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
+                <button type="button" className="icon-button">
+                  ⚙
+                </button>
+              </div>
+              <div className="tasks-status-row">
+                {kanbanColumns.map((column) => (
+                  <button key={column.name} type="button" className="status-filter-button">
+                    <span>{column.name}</span>
+                    <span>{column.tasks.length}</span>
+                  </button>
+                ))}
               </div>
 
               {projectView === 'Table' ? (
                 <div className="projects-table-layout">
-                  <div className="card panel table-panel">
+                  <div className="card panel table-panel dark-table-panel">
+                    <div className="table-header-row">
+                      <div>
+                        <strong>Open tasks</strong>
+                        <span>{tasks.length} items</span>
+                      </div>
+                      <button className="ghost-button" onClick={openCreateTask}>Create task</button>
+                    </div>
                     <table>
                       <thead>
                         <tr>
                           <th>Task</th>
                           <th>Status</th>
-                          <th>Due</th>
-                          <th>Team</th>
-                          <th>Progress</th>
+                          <th>Type</th>
+                          <th>Due date</th>
                           <th>Priority</th>
                         </tr>
                       </thead>
                       <tbody>
                         {tasks.map((task) => (
-                          <tr
-                            key={task.id}
-                            className={selectedTaskId === task.id ? 'selected-row' : ''}
-                            onClick={() => setSelectedTaskId(task.id)}
-                          >
-                            <td>{task.title}</td>
+                          <tr key={task.id}>
+                            <td>
+                              <div className="task-title-cell">
+                                <span className="task-icon">✉</span>
+                                <div>
+                                  <strong>{task.title}</strong>
+                                  <small>{task.description}</small>
+                                </div>
+                              </div>
+                            </td>
                             <td>
                               <span className={`status-tag ${task.status.replace(' ', '-').toLowerCase()}`}>
                                 {task.status}
                               </span>
                             </td>
-                            <td>{task.due}</td>
-                            <td>{task.owner}</td>
                             <td>
-                              <div className="progress-bar">
-                                <div style={{ width: `${task.progress}%` }} />
-                              </div>
+                              <span className="type-chip">{task.type}</span>
                             </td>
+                            <td>{task.due}</td>
                             <td>{task.priority}</td>
                           </tr>
                         ))}
@@ -637,97 +575,21 @@ function App() {
                     </table>
                   </div>
 
-                  <aside className="task-detail-panel card panel">
-                    <div className="panel-header">
-                      <div>
-                        <span className="status-chip">{selectedTask.status}</span>
-                        <h3>{selectedTask.title}</h3>
-                      </div>
-                      <span>{selectedTask.type}</span>
-                    </div>
-                    <p>{selectedTask.description}</p>
-                    <div className="task-detail-grid">
-                      <div>
-                        <strong>Assignee</strong>
-                        <p>{selectedTask.assignee}</p>
-                      </div>
-                      <div>
-                        <strong>Schedule</strong>
-                        <p>{selectedTask.schedule}</p>
-                      </div>
-                      <div>
-                        <strong>Estimated time</strong>
-                        <p>{selectedTask.estimated}</p>
-                      </div>
-                      <div>
-                        <strong>Due date</strong>
-                        <p>{selectedTask.due}</p>
-                      </div>
-                      <div>
-                        <strong>Priority</strong>
-                        <p>{selectedTask.priority}</p>
-                      </div>
-                    </div>
-                    <div className="task-detail-section">
-                      <strong>Tags</strong>
-                      <div className="tag-list">
-                        {selectedTask.tags.map((tag) => (
-                          <span key={tag} className="tag-pill">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="task-detail-section">
-                      <strong>Subtasks</strong>
-                      <div className="subtask-list">
-                        {selectedTask.subtasks.map((subtask) => (
-                          <div key={subtask.id} className="subtask-item">
-                            <span>{subtask.done ? '✓' : '○'}</span>
-                            <p>{subtask.title}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </aside>
                 </div>
               ) : (
-                <div className="kanban-board">
-                  {kanbanColumns.map((column) => (
-                    <div key={column.name} className="board-column" onDragOver={dragOver} onDrop={(event) => dropTask(event, column.name)}>
-                      <div className="column-header" style={{ backgroundColor: column.color }}>
-                        <strong>{column.name}</strong>
-                      </div>
-                      <div className="column-body">
-                        {column.tasks.map((task) => (
-                          <div key={task} className="kanban-card" draggable onDragStart={(event) => dragStart(event, task)}>
-                            <strong>{task}</strong>
-                            <div className="card-chip">Design</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <KanbanBoard
+                    columns={kanbanColumns}
+                    onColumnsChange={handleKanbanColumnsChange}
+                  />
+                  <div className="workflow-footer">
+                    <button type="button" className="ghost-button" onClick={openCreateTask}>
+                      + Create task
+                    </button>
+                  </div>
+                </>
               )}
 
-              <div className="project-list-card card panel">
-                <div className="panel-header">
-                  <h3>Project list</h3>
-                  <span>Active and completed</span>
-                </div>
-                <div className="project-list">
-                  {projectItems.map((project) => (
-                    <div key={project.id} className="project-row">
-                      <div>
-                        <strong>{project.name}</strong>
-                        <small>{project.status}</small>
-                      </div>
-                      <div>{project.progress}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </>
           )}
 
@@ -842,60 +704,6 @@ function App() {
             </div>
           )}
 
-          {activePage === 'connected' && (
-            <div className="cards-grid">
-              {connected.map((app) => (
-                <div key={app.name} className="card panel app-card">
-                  <div>
-                    <strong>{app.name}</strong>
-                    <p>{app.description}</p>
-                  </div>
-                  <button className={app.enabled ? 'primary-button' : 'ghost-button'} onClick={() => toggleApp(app.name)}>
-                    {app.enabled ? 'Connected' : 'Connect'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activePage === 'requests' && (
-            <div className="requests-grid">
-              <div className="card panel request-filters">
-                <h3>Incoming requests</h3>
-                <input
-                  className="search-input"
-                  placeholder="Search requests"
-                  value={requestSearch}
-                  onChange={(event) => setRequestSearch(event.target.value)}
-                />
-                <div className="filter-row">
-                  {(['All', 'Pending', 'Approved'] as const).map((filter) => (
-                    <button
-                      key={filter}
-                      className={requestFilter === filter ? 'active' : ''}
-                      onClick={() => setRequestFilter(filter)}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="requests-list">
-                {filteredRequests.map((request) => (
-                  <div key={request.id} className="card panel request-card">
-                    <div>
-                      <strong>{request.title}</strong>
-                      <p>{request.requester}</p>
-                    </div>
-                    <div>
-                      <span className={`status-tag ${request.status.toLowerCase()}`}>{request.status}</span>
-                      <small>{request.date}</small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
       </div>
 
@@ -997,18 +805,6 @@ function App() {
         </div>
       )}
 
-      <footer className="bottom-nav">
-        {sidebarItems.map((item) => (
-          <button
-            key={item.key}
-            className={activePage === item.key ? 'active' : ''}
-            onClick={() => setActivePage(item.key)}
-          >
-            <span className={`menu-icon icon-${item.icon}`} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </footer>
     </div>
   )
 }
