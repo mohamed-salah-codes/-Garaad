@@ -1,0 +1,449 @@
+
+--- REPLACEMENT 1 ---
+TARGET:
+"                  <div className=\"type-badges\">\n                    <div className=\"type-badge\"><span className=\"type-color meeting\"></span> Meeting</div>\n                    <div className=\"type-badge\"><span className=\"type-color phone\"></span> Phone call</div>\n                  </div>"
+REPLACEMENT:
+"                  <div className=\"type-badges\">\n                    {eventTypes.map((type) => (\n                      <div key={type.name} className=\"type-badge\">\n                        <span className=\"type-color-dot\" style={{ background: type.color }}></span> {type.name}\n                      </div>\n                    ))}\n                  </div>"
+
+--- REPLACEMENT 2 ---
+TARGET:
+  const [calendarMode, setCalendarMode] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly')
+  const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Kanban')
+REPLACEMENT:
+  const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Kanban')
+
+--- REPLACEMENT 3 ---
+TARGET:
+  const [pendingTaskId, setPendingTaskId] = useState('')
+  const [pendingTaskTitle, setPendingTaskTitle] = useState('')
+REPLACEMENT:
+  const [pendingTaskId, setPendingTaskId] = useState('')
+
+--- REPLACEMENT 4 ---
+TARGET:
+  const [completionCost, setCompletionCost] = useState('')
+  const [completionMode, setCompletionMode] = useState('Manual time')
+REPLACEMENT:
+  const [completionMode, setCompletionMode] = useState('Manual time')
+
+--- REPLACEMENT 5 ---
+TARGET:
+                        estimated: estimated || '0h',
+REPLACEMENT:
+                        estimatedHours: parseFloat((estimated || '0').replace('h', '')) || 0,
+
+--- REPLACEMENT 6 ---
+TARGET:
+  const handleTaskDropToCompleted = (task: KanbanTask, pending: KanbanColumnLegacy[]) => {
+    setPendingTaskId(task.id)
+    setPendingTaskTitle(task.title)
+    setPendingTaskEstimated(`${task.estimatedHours || 0}h`)
+    setPendingCompletionColumns(pending)
+    setCompletionDate(new Date().toISOString().split('T')[0])
+    setCompletionHours('0')
+    setCompletionCost('')
+    setCompletionMode('Manual time')
+    setShowCompletionModal(true)
+  }
+REPLACEMENT:
+  const handleTaskDropToCompleted = (task: KanbanTask, pending: KanbanColumnLegacy[]) => {
+    setPendingTaskId(task.id)
+    setPendingTaskEstimated(`${task.estimatedHours || 0}h`)
+    setPendingCompletionColumns(pending)
+    setCompletionDate(new Date().toISOString().split('T')[0])
+    setCompletionHours('0')
+    setCompletionMode('Manual time')
+    setShowCompletionModal(true)
+  }
+
+--- REPLACEMENT 7 ---
+TARGET:
+                        estimatedHours: parseFloat((estimated || '0').replace('h', '')) || 0,
+                        priority: 'None',
+                        assignee: 'Me',
+                        assigneeAvatar: 'M',
+                        subtasks: [],
+                        projectId: selectedProjectId,
+                      }
+REPLACEMENT:
+                        estimatedHours: parseFloat((estimated || '0').replace('h', '')) || 0,
+                        priority: 'None',
+                        assignee: 'Me',
+                        assigneeAvatar: 'M',
+                        subtasks: [],
+                        projectId: selectedProjectId,
+                        createdAt: new Date().toISOString(),
+                      }
+
+--- REPLACEMENT 8 ---
+TARGET:
+                <div key={type.name} className="status-item-row">
+                  <span className="drag-handle">⋮⋮</span>
+                  <div className="type-color-circle" style={{ background: type.color }}></div>
+                  <span className="status-name">{type.name}</span>
+                </div>
+REPLACEMENT:
+                <div key={type.name} className="status-item-row">
+                  <span className="drag-handle">⋮⋮</span>
+                  <div className="type-color-circle" style={{ background: type.color }}></div>
+                  <span className="status-name">{type.name}</span>
+                  {renderMenu(`event-${type.name}`, 'event type')}
+                </div>
+
+--- REPLACEMENT 9 ---
+TARGET:
+"    </div>\n  )\n}"
+REPLACEMENT:
+"      {editingTaskType && (\n        <div className=\"status-modal-overlay\" onClick={() => { setEditingTaskType(null); setShowColorPicker(false) }}>\n          <div className=\"status-modal create-modal\" onClick={(e) => e.stopPropagation()}>\n            <div className=\"status-modal-header\">\n              <h2>Edit task type</h2>\n            </div>\n            <div className=\"status-modal-body\">\n              <div className=\"create-status-input-row\" style={{ position: 'relative', marginBottom: '8px' }}>\n                <button\n                  className=\"status-icon-btn\"\n                  style={{ background: editingTaskType.color, border: 'none' }}\n                  onClick={() => setShowColorPicker(!showColorPicker)}\n                >\n                  <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"rgba(255,255,255,0.7)\" strokeWidth=\"2\">\n                    <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\"></rect>\n                    <circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\"></circle>\n                    <polyline points=\"21 15 16 10 5 21\"></polyline>\n                  </svg>\n                </button>\n                {showColorPicker && (\n                  <div className=\"color-picker-popup\">\n                    {typeColors.map((color) => (\n                      <button\n                        key={color}\n                        className={`color-swatch ${editingTaskType.color === color ? 'selected' : ''}`}\n                        style={{ background: color }}\n                        onClick={() => { setEditingTaskType({ ...editingTaskType, color }); setShowColorPicker(false) }}\n                      />\n                    ))}\n                  </div>\n                )}\n                <input\n                  type=\"text\"\n                  className={`create-status-input ${editingTaskType.name ? '' : 'error-outline'}`}\n                  placeholder=\"Type name\"\n                  value={editingTaskType.name}\n      
+<truncated 5414 bytes>
+
+--- REPLACEMENT 10 ---
+TARGET:
+  const [taskStatuses, setTaskStatuses] = useState([
+    { id: 'status-new-task', name: 'New task', group: 'Open', icon: null, isDefault: true, isNew: true },
+    { id: 'status-scheduled', name: 'Scheduled', group: 'Open', icon: '📅', isDefault: false },
+    { id: 'status-in-progress', name: 'In Progress', group: 'Open', icon: '🛠', isDefault: false },
+    { id: 'status-completed', name: 'Completed', group: 'Closed', icon: '✅', isDefault: true, isCompleted: true },
+  ])
+  const [editingTaskStatus, setEditingTaskStatus] = useState<{ id: string, name: string, icon: string | null } | null>(null)
+  const [showStatusEmojiPicker, setShowStatusEmojiPicker] = useState(false)
+  const emojis = ['🛠', '✅', '📅', '🚀', '🔥', '💻', '🎨', '📝', '⚡', '💡', '🔍', '🎯']
+REPLACEMENT:
+  type TaskStatus = { id: string; name: string; group: string; icon: string | null; isDefault: boolean; isNew?: boolean; isCompleted?: boolean }
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([
+    { id: 'status-new-task', name: 'New task', group: 'Open', icon: null, isDefault: true, isNew: true },
+    { id: 'status-scheduled', name: 'Scheduled', group: 'Open', icon: '📅', isDefault: false },
+    { id: 'status-in-progress', name: 'In Progress', group: 'Open', icon: '🛠', isDefault: false },
+    { id: 'status-completed', name: 'Completed', group: 'Closed', icon: '✅', isDefault: true, isCompleted: true },
+  ])
+  const [editingTaskStatus, setEditingTaskStatus] = useState<{ id: string, name: string, icon: string | null } | null>(null)
+  const [showStatusEmojiPicker, setShowStatusEmojiPicker] = useState(false)
+  const emojis = ['🛠', '✅', '📅', '🚀', '🔥', '💻', '🎨', '📝', '⚡', '💡', '🔍', '🎯']
+
+--- REPLACEMENT 11 ---
+TARGET:
+    <div className={`app-shell ${themeMode === 'Dark' ? 'dark-mode' : ''} ${activePage === 'settings' ? 'settings-active dark-mode' : ''}`}>
+REPLACEMENT:
+    <div className={`app-shell ${themeMode === 'Dark' ? 'dark-mode' : ''} ${activePage === 'settings' ? 'settings-active' : ''}`}>
+
+--- REPLACEMENT 12 ---
+TARGET:
+"            <header className=\"topbar settings-topbar\">\n              <h1>Project settings</h1>\n              <div className=\"topbar-actions settings-actions\">\n                <div className=\"search-bar\">\n                  <span className=\"search-icon\">🔍</span>\n                  <input type=\"text\" placeholder=\"Search\" />\n                </div>\n                <button className=\"icon-button notification-button\">🔔</button>\n                <div className=\"profile-avatar small-avatar\">\n                  <img src=\"https://i.pravatar.cc/150?u=a042581f4e29026704d\" alt=\"Profile\" />\n                </div>\n              </div>\n            </header>"
+REPLACEMENT:
+"            <header className=\"topbar settings-topbar\">\n              <h1>Project settings</h1>\n            </header>"
+
+--- REPLACEMENT 13 ---
+TARGET:
+"            <header className=\"topbar\">\n              <div>\n                <p className=\"breadcrumb\">Project / {selectedProject?.name ?? 'Select a project'}</p>\n                <h1>{selectedProject?.name ?? 'Select a project'}</h1>\n              </div>\n              <div className=\"topbar-actions\">\n                <button className=\"ghost-button\">Search notes</button>\n                <button className=\"primary-button\" onClick={activePage === 'tasks' ? openCreateTask : undefined}>\n                  {activePage === 'tasks' ? 'New task' : 'New item'}\n                </button>\n              </div>\n            </header>"
+REPLACEMENT:
+"            {activePage === 'notes' ? (\n              <header className=\"topbar notes-page-topbar\">\n                <div className=\"notes-topbar-left\">\n                  <button className=\"primary-button notes-add-btn\" onClick={addNote}>+ Add new</button>\n                </div>\n                <div className=\"notes-topbar-right\">\n                  <div className=\"notes-search-wrapper\">\n                    <span className=\"search-icon\">🔍</span>\n                    <input type=\"text\" placeholder=\"Search\" />\n                  </div>\n                  <button className=\"icon-btn bell-btn\">🔔</button>\n                  <div className=\"profile-avatar-small\">\n                    <img src=\"https://i.pravatar.cc/150?u=a042581f4e29026024d\" alt=\"Profile\" />\n                  </div>\n                </div>\n              </header>\n            ) : (\n              <header className=\"topbar\">\n                <div>\n                  <p className=\"breadcrumb\">Project / {selectedProject?.name ?? 'Select a project'}</p>\n                  <h1>{selectedProject?.name ?? 'Select a project'}</h1>\n                </div>\n                <div className=\"topbar-actions\">\n                  <button className=\"ghost-button\">Search notes</button>\n                  <button className=\"primary-button\" onClick={activePage === 'tasks' ? openCreateTask : undefined}>\n                    {activePage === 'tasks' ? 'New task' : 'New item'}\n                  </button>\n                </div>\n              </header>\n            )}"
+
+--- REPLACEMENT 14 ---
+TARGET:
+"            <div className=\"project-menu\">\n              {projectSections.map((section) => (\n                <button\n                  key={section.key}\n                  type=\"button\"\n                  className={`project-nav-button ${activePage === section.key ? 'active' : ''}`}\n                  onClick={() => {\n                    if (section.key === 'settings') {\n                      setActivePage('settings')\n                      setSettingsTab('Configuration')\n                    } else {\n                      setActivePage(section.key)\n                    }\n                  }}\n                >\n                  {section.label}\n                </button>\n              ))}\n            </div>"
+REPLACEMENT:
+"            {activePage !== 'notes' && (\n              <div className=\"project-menu\">\n                {projectSections.map((section) => (\n                  <button\n                    key={section.key}\n                    type=\"button\"\n                    className={`project-nav-button ${activePage === section.key ? 'active' : ''}`}\n                    onClick={() => {\n                      if (section.key === 'settings') {\n                        setActivePage('settings')\n                        setSettingsTab('Configuration')\n                      } else {\n                        setActivePage(section.key)\n                      }\n                    }}\n                  >\n                    {section.label}\n                  </button>\n                ))}\n              </div>\n            )}"
+
+--- REPLACEMENT 15 ---
+TARGET:
+  const [noteSearch, setNoteSearch] = useState('')
+  const [noteCategory, setNoteCategory] = useState('All')
+REPLACEMENT:
+  const [noteSearch] = useState('')
+  const [noteCategory] = useState('All')
+
+--- REPLACEMENT 16 ---
+TARGET:
+  const deleteNote = () => {
+    setNotes((current) => current.filter((note) => note.id !== selectedNoteId))
+    setSelectedNoteId(notes[0]?.id ?? '')
+  }
+REPLACEMENT:
+  const _deleteNote = () => {
+    setNotes((current) => current.filter((note) => note.id !== selectedNoteId))
+    setSelectedNoteId(notes[0]?.id ?? '')
+  }
+
+--- REPLACEMENT 17 ---
+TARGET:
+"\n  const _deleteNote = () => {\n    setNotes((current) => current.filter((note) => note.id !== selectedNoteId))\n    setSelectedNoteId(notes[0]?.id ?? '')\n  }"
+REPLACEMENT:
+""
+
+--- REPLACEMENT 18 ---
+TARGET:
+"      <div className={`content ${activePage === 'settings' ? 'settings-content-area' : ''}`}>"
+REPLACEMENT:
+"      <div className={`content ${activePage === 'settings' ? 'settings-content-area' : ''} ${activePage === 'notes' ? 'notes-content-area' : ''}`}>"
+
+--- REPLACEMENT 19 ---
+TARGET:
+"            {activePage === 'notes' ? (\n              <header className=\"topbar notes-page-topbar\">\n                <div className=\"notes-topbar-left\">\n                  <button className=\"primary-button notes-add-btn\" onClick={addNote}>+ Add new</button>\n                </div>\n                <div className=\"notes-topbar-right\">\n                  <div className=\"notes-search-wrapper\">\n                    <span className=\"search-icon\">🔍</span>\n                    <input type=\"text\" placeholder=\"Search\" />\n                  </div>\n                  <button className=\"icon-btn bell-btn\">🔔</button>\n                  <div className=\"profile-avatar-small\">\n                    <img src=\"https://i.pravatar.cc/150?u=a042581f4e29026024d\" alt=\"Profile\" />\n                  </div>\n                </div>\n              </header>\n            ) : ("
+REPLACEMENT:
+"            {activePage === 'notes' ? (\n              <header className=\"topbar notes-page-topbar\">\n                <div className=\"notes-topbar-left\">\n                  <button className=\"primary-button notes-add-btn\" onClick={addNote}>+ Add new</button>\n                </div>\n              </header>\n            ) : ("
+
+--- REPLACEMENT 20 ---
+TARGET:
+  const [showTaskModal, setShowTaskModal] = useState(false)
+REPLACEMENT:
+  const [showTaskModal, setShowTaskModal] = useState(false)
+  const [showFormatDropdown, setShowFormatDropdown] = useState(false)
+  const [textFormat, setTextFormat] = useState('Normal text')
+
+--- REPLACEMENT 21 ---
+TARGET:
+                    <button className="toolbar-dropdown">Normal text <span>v</span></button>
+REPLACEMENT:
+                    <div className="toolbar-dropdown-container" style={{ position: 'relative' }}>
+                      <button 
+                        className="toolbar-dropdown"
+                        onClick={() => setShowFormatDropdown(!showFormatDropdown)}
+                      >
+                        {textFormat} <span>v</span>
+                      </button>
+                      {showFormatDropdown && (
+                        <div className="format-dropdown-menu">
+                          {['Normal text', 'Heading 1', 'Heading 2', 'Quote'].map(format => (
+                            <button 
+                              key={format}
+                              className={`format-dropdown-item ${textFormat === format ? 'active' : ''}`}
+                              onClick={() => {
+                                setTextFormat(format)
+                                setShowFormatDropdown(false)
+                              }}
+                            >
+                              {format}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+--- REPLACEMENT 22 ---
+TARGET:
+"                  <div\n                    className=\"editor-body-new\"\n                    contentEditable\n                    suppressContentEditableWarning\n                    onInput={(event) => handleNoteChange((event.target as HTMLDivElement).innerText)}\n                    data-placeholder=\"Write your text here...\"\n                  >\n                    {selectedNote?.content === 'Start writing the note here...' ? '' : selectedNote?.content}\n                  </div>"
+REPLACEMENT:
+"                  <div\n                    key={selectedNoteId}\n                    className=\"editor-body-new\"\n                    contentEditable\n                    suppressContentEditableWarning\n                    onBlur={(event) => handleNoteChange((event.target as HTMLDivElement).innerHTML)}\n                    onInput={(event) => handleNoteChange((event.target as HTMLDivElement).innerHTML)}\n                    dangerouslySetInnerHTML={{ \n                      __html: selectedNote?.content === 'Start writing the note here...' ? '' : (selectedNote?.content || '') \n                    }}\n                    data-placeholder=\"Write your text here...\"\n                  />"
+
+--- REPLACEMENT 23 ---
+TARGET:
+"                      <div className=\"note-preview-new\">{note.content && note.content !== 'Start writing the note here...' ? note.content.substring(0, 30) + '...' : 'No text yet'}</div>"
+REPLACEMENT:
+"                      <div className=\"note-preview-new\">{note.content && note.content !== 'Start writing the note here...' ? note.content.replace(/<[^>]+>/g, '').substring(0, 30) + '...' : 'No text yet'}</div>"
+
+--- REPLACEMENT 24 ---
+TARGET:
+"  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {\n    if (e.key === 'Enter') {\n      const selection = window.getSelection();\n      if (!selection || selection.rangeCount === 0) return;\n      \n      let node: Node | null = selection.anchorNode;\n      let inBlockquote = false;\n      let inHeading = false;\n      \n      while (node && node !== e.currentTarget) {\n        if (node.nodeName === 'BLOCKQUOTE') inBlockquote = true;\n        if (node.nodeName === 'H1' || node.nodeName === 'H2') inHeading = true;\n        node = node.parentNode;\n      }\n      \n      if (!e.shiftKey && (inBlockquote || inHeading)) {\n        e.preventDefault();\n        // Insert a new block\n        document.execCommand('insertParagraph', false);\n        // Turn the newly inserted block into a standard DIV, breaking out of the quote/heading\n        document.execCommand('formatBlock', false, 'DIV');\n        // Update the toolbar dropdown state back to Normal text\n        setTextFormat('Normal text');\n      }\n    }\n  }"
+REPLACEMENT:
+"  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {\n    if (e.key === 'Enter') {\n      const selection = window.getSelection();\n      if (!selection || selection.rangeCount === 0) return;\n      \n      let node: Node | null = selection.anchorNode;\n      let inBlockquote = false;\n      let inHeading = false;\n      \n      while (node && node !== e.currentTarget) {\n        if (node.nodeName === 'BLOCKQUOTE') inBlockquote = true;\n        if (node.nodeName === 'H1' || node.nodeName === 'H2') inHeading = true;\n        node = node.parentNode;\n      }\n      \n      // If Shift+Enter, we just let the browser insert a <br> (stay in quote/heading).\n      if (e.shiftKey) {\n        return; // default behavior\n      }\n\n      // If Enter (no shift), we want to exit the quote or heading.\n      if (inBlockquote || inHeading) {\n        e.preventDefault();\n        \n        // 1. Create a new line block\n        document.execCommand('insertParagraph', false);\n        \n        // 2. If it was a blockquote, pull this new block out of the blockquote\n        if (inBlockquote) {\n          document.execCommand('outdent', false);\n        }\n        \n        // 3. Make sure the new block is a standard DIV/P (especially for headings)\n        document.execCommand('formatBlock', false, 'DIV');\n        \n        // 4. Update the UI dropdown state\n        setTextFormat('Normal text');\n      }\n    }\n  }"
+
+--- REPLACEMENT 25 ---
+TARGET:
+"import { useMemo, useState, useEffect } from 'react'"
+REPLACEMENT:
+"import { useMemo, useState, useEffect, useRef } from 'react'"
+
+--- REPLACEMENT 26 ---
+TARGET:
+  const { currentProject, setCurrentProject, projects } = useActiveProject()
+REPLACEMENT:
+  const { currentProject, setCurrentProject, projects, setProjects, folders, setFolders } = useActiveProject()
+
+--- REPLACEMENT 27 ---
+TARGET:
+  const editorRef = useRef<HTMLDivElement>(null)
+REPLACEMENT:
+  const editorRef = useRef<HTMLDivElement>(null)
+
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
+  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
+  const [folderToRename, setFolderToRename] = useState<{id: string, name: string} | null>(null)
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({})
+
+--- REPLACEMENT 28 ---
+TARGET:
+"  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date())\n  const [showDatePicker, setShowDatePicker] = useState(false)\n  const [pickerViewDate, setPickerViewDate] = useState(new Date())"
+REPLACEMENT:
+"  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date())\n  const [showDatePicker, setShowDatePicker] = useState(false)\n  const [pickerViewDate, setPickerViewDate] = useState(new Date())\n\n  const toggleFolder = (folderId: string) => {\n    setExpandedFolders(prev => ({ ...prev, [folderId]: !prev[folderId] }))\n  }\n\n  const handleCreateFolder = () => {\n    const newFolder = { id: `f${Date.now()}`, name: 'New Folder' }\n    setFolders(prev => [...prev, newFolder])\n    setIsAddMenuOpen(false)\n    setFolderToRename(newFolder)\n  }\n\n  const handleCreateProject = (folderId?: string) => {\n    const newProject = {\n      id: `p${Date.now()}`,\n      name: 'New Project',\n      status: 'Active',\n      progress: 0,\n      team: [],\n      folderId\n    }\n    setProjects(prev => [...prev, newProject])\n    setIsAddMenuOpen(false)\n    setFolderMenuOpenId(null)\n    navigate(`/project/${newProject.id}/tasks`)\n  }\n\n  const handleDeleteFolder = (folderId: string) => {\n    setFolders(prev => prev.filter(f => f.id !== folderId))\n    setProjects(prev => prev.map(p => p.folderId === folderId ? { ...p, folderId: undefined } : p))\n    setFolderMenuOpenId(null)\n  }\n\n  const handleRenameFolder = (newName: string) => {\n    if (folderToRename) {\n      setFolders(prev => prev.map(f => f.id === folderToRename.id ? { ...f, name: newName } : f))\n    }\n    setFolderToRename(null)\n  }"
+
+--- REPLACEMENT 29 ---
+TARGET:
+"        <div className=\"sidebar-section project-list-section\">\n          <div className=\"section-header\">\n            <span>Projects</span>\n            <button type=\"button\" className=\"icon-button\" aria-label=\"New project\">\n              +\n            </button>\n          </div>\n\n          <div className=\"project-list\">\n            {projects.map((project) => (\n              <button\n                key={project.id}\n                type=\"button\"\n                className={`project-link ${selectedProjectId === project.id ? 'active' : ''}`}\n                onClick={() => setSelectedProjectId(project.id)}\n              >\n                <span>{project.name}</span>\n              </button>\n            ))}\n          </div>\n        </div>"
+REPLACEMENT:
+"        <div className=\"sidebar-section project-list-section\">\n          <div className=\"section-header\" style={{ position: 'relative' }}>\n            <span>Projects</span>\n            <button \n              type=\"button\" \n              className=\"icon-button\" \n              aria-label=\"New project\"\n              onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}\n            >\n              +\n            </button>\n            {isAddMenuOpen && (\n              <div className=\"sidebar-dropdown-menu\">\n                <button className=\"sidebar-dropdown-item\" onClick={() => handleCreateProject()}>\n                  <span style={{ border: '1px solid currentColor', borderRadius: '4px', width: '16px', height: '16px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>+</span> \n                  Create project\n                </button>\n                <button className=\"sidebar-dropdown-item\" onClick={handleCreateFolder}>\n                  <span>📁</span>\n                  Create folder\n                </button>\n              </div>\n            )}\n          </div>\n\n          <div className=\"project-list\">\n            {folders.map(folder => {\n              const folderProjects = projects.filter(p => p.folderId === folder.id);\n              const isExpanded = expandedFolders[folder.id];\n              return (\n                <div key={folder.id} className=\"sidebar-folder\">\n                  <div className={`folder-header ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleFolder(folder.id)}>\n                    <span className=\"folder-arrow\">^</span>\n                    <span className=\"folder-icon\">📁</span>\n                    <span className=\"folder-name\">{folder.name}</span>\n                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>\n                      <button \n                        className=\"folder-menu-btn\"\n                        onClick={(e) => {\n                 
+<truncated 2647 bytes>
+
+--- REPLACEMENT 30 ---
+TARGET:
+"\n      {showCompletionModal && ("
+REPLACEMENT:
+"      {folderToRename && (\n        <div className=\"rename-modal-overlay\" onClick={() => setFolderToRename(null)}>\n          <div className=\"rename-modal\" onClick={(e) => e.stopPropagation()}>\n            <h3>Rename folder</h3>\n            <input \n              autoFocus\n              type=\"text\" \n              value={folderToRename.name} \n              onChange={e => setFolderToRename({ ...folderToRename, name: e.target.value })}\n              onKeyDown={e => {\n                if (e.key === 'Enter') handleRenameFolder(folderToRename.name);\n                if (e.key === 'Escape') setFolderToRename(null);\n              }}\n            />\n            <div className=\"rename-modal-actions\">\n              <button className=\"cancel-btn\" onClick={() => setFolderToRename(null)}>Cancel</button>\n              <button \n                className={`save-btn ${folderToRename.name.trim() ? 'active' : ''}`} \n                onClick={() => handleRenameFolder(folderToRename.name)}\n                disabled={!folderToRename.name.trim()}\n              >Save</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n      {showCompletionModal && ("
+
+--- REPLACEMENT 31 ---
+TARGET:
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
+  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
+  const [folderToRename, setFolderToRename] = useState<{id: string, name: string} | null>(null)
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({})
+
+REPLACEMENT:
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
+  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
+  const [folderToRename, setFolderToRename] = useState<{id: string, name: string} | null>(null)
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ f1: true })
+
+
+--- REPLACEMENT 32 ---
+TARGET:
+                    <span className="folder-arrow">^</span>
+REPLACEMENT:
+                    <span className="folder-arrow" style={{ display: 'inline-flex', alignItems: 'center', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+
+--- REPLACEMENT 33 ---
+TARGET:
+"  }, [selectedNoteId]) // intentionally only run when selectedNoteId changes\n\n"
+REPLACEMENT:
+"  }, [selectedNoteId]) // intentionally only run when selectedNoteId changes\n\n  useEffect(() => {\n    const closeMenus = () => {\n      setIsAddMenuOpen(false)\n      setFolderMenuOpenId(null)\n    }\n    document.addEventListener('click', closeMenus)\n    return () => document.removeEventListener('click', closeMenus)\n  }, [])\n\n"
+
+--- REPLACEMENT 34 ---
+TARGET:
+"                        <div className=\"sidebar-dropdown-menu\" style={{ right: 'auto', left: '0' }}>"
+REPLACEMENT:
+"                        <div className=\"sidebar-dropdown-menu\" onClick={e => e.stopPropagation()}>"
+
+--- REPLACEMENT 35 ---
+TARGET:
+"                  <div className={`folder-header ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleFolder(folder.id)}>\n                    <span className=\"folder-arrow\" style={{ display: 'inline-flex', alignItems: 'center', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>\n                      <svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\">\n                        <path d=\"M2 4L6 8L10 4\" stroke=\"currentColor\" strokeWidth=\"1.5\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n                      </svg>\n                    </span>\n                    <span className=\"folder-icon\">📁</span>\n                    <span className=\"folder-name\">{folder.name}</span>\n                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>\n                      <button \n                        className=\"folder-menu-btn\"\n                        onClick={(e) => {\n                          e.stopPropagation();\n                          setFolderMenuOpenId(folderMenuOpenId === folder.id ? null : folder.id);\n                        }}\n                      >⋮</button>\n                      {folderMenuOpenId === folder.id && (\n                        <div className=\"sidebar-dropdown-menu\" onClick={e => e.stopPropagation()}>"
+REPLACEMENT:
+"                  <div className={`folder-header ${isExpanded ? 'expanded' : ''}`} style={{ position: 'relative' }} onClick={() => toggleFolder(folder.id)}>\n                    <span className=\"folder-arrow\" style={{ display: 'inline-flex', alignItems: 'center', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>\n                      <svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\">\n                        <path d=\"M2 4L6 8L10 4\" stroke=\"currentColor\" strokeWidth=\"1.5\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n                      </svg>\n                    </span>\n                    <span className=\"folder-icon\">📁</span>\n                    <span className=\"folder-name\">{folder.name}</span>\n                    <button \n                      className=\"folder-menu-btn\"\n                      onClick={(e) => {\n                        e.stopPropagation();\n                        setFolderMenuOpenId(folderMenuOpenId === folder.id ? null : folder.id);\n                      }}\n                    >⋮</button>\n                    {folderMenuOpenId === folder.id && (\n                      <div className=\"sidebar-dropdown-menu\" onClick={e => e.stopPropagation()}>"
+
+--- REPLACEMENT 36 ---
+TARGET:
+"                      )}\n                    </div>\n                  </div>\n                  {isExpanded && ("
+REPLACEMENT:
+"                      )}\n                  </div>\n                  {isExpanded && ("
+
+--- REPLACEMENT 37 ---
+TARGET:
+"      )}\n\n"
+REPLACEMENT:
+"        </div>\n      )}\n\n      {folderToDelete && (\n        <div className=\"rename-modal-overlay\" onClick={() => setFolderToDelete(null)}>\n          <div className=\"rename-modal\" onClick={(e) => e.stopPropagation()}>\n            <h3>Delete folder</h3>\n            <p className=\"delete-modal-text\">Are you sure you want to delete the whole folder?</p>\n            <div className=\"rename-modal-actions\">\n              <button className=\"cancel-btn\" onClick={() => setFolderToDelete(null)}>Cancel</button>\n              <button className=\"delete-modal-btn\" onClick={confirmDeleteFolder}>Delete folder</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n      {projectToDelete && (\n        <div className=\"rename-modal-overlay\" onClick={() => setProjectToDelete(null)}>\n          <div className=\"rename-modal\" onClick={(e) => e.stopPropagation()}>\n            <h3>Delete project</h3>\n            <p className=\"delete-modal-text\">Are you sure you want to permanently delete this project?</p>\n            <div className=\"delete-project-info\">\n              <div className=\"avatar-circle\" style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.6rem' }}>M</div>\n              <span className=\"delete-project-name\">{projectToDelete.name}</span>\n            </div>\n            <div className=\"rename-modal-actions\">\n              <button className=\"cancel-btn\" onClick={() => setProjectToDelete(null)}>Cancel</button>\n              <button className=\"delete-modal-btn\" onClick={confirmDeleteProject}>Delete project</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n"
+
+--- REPLACEMENT 38 ---
+TARGET:
+"        </div>\n      )}\n\n      {showCompletionModal && ("
+REPLACEMENT:
+"        </div>\n      )}\n\n      {folderToDelete && (\n        <div className=\"rename-modal-overlay\" onClick={() => setFolderToDelete(null)}>\n          <div className=\"rename-modal\" onClick={(e) => e.stopPropagation()}>\n            <h3>Delete folder</h3>\n            <p className=\"delete-modal-text\">Are you sure you want to delete the whole folder?</p>\n            <div className=\"rename-modal-actions\">\n              <button className=\"cancel-btn\" onClick={() => setFolderToDelete(null)}>Cancel</button>\n              <button className=\"delete-modal-btn\" onClick={confirmDeleteFolder}>Delete folder</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n      {projectToDelete && (\n        <div className=\"rename-modal-overlay\" onClick={() => setProjectToDelete(null)}>\n          <div className=\"rename-modal\" onClick={(e) => e.stopPropagation()}>\n            <h3>Delete project</h3>\n            <p className=\"delete-modal-text\">Are you sure you want to permanently delete this project?</p>\n            <div className=\"delete-project-info\">\n              <div className=\"avatar-circle\" style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.6rem' }}>M</div>\n              <span className=\"delete-project-name\">{projectToDelete.name}</span>\n            </div>\n            <div className=\"rename-modal-actions\">\n              <button className=\"cancel-btn\" onClick={() => setProjectToDelete(null)}>Cancel</button>\n              <button className=\"delete-modal-btn\" onClick={confirmDeleteProject}>Delete project</button>\n            </div>\n          </div>\n        </div>\n      )}\n\n      {showCompletionModal && ("
+
+--- REPLACEMENT 39 ---
+TARGET:
+"  const handleDeleteProject = (project: Project) => {\n    setProjectToDelete(project)\n  }"
+REPLACEMENT:
+""
+
+--- REPLACEMENT 40 ---
+TARGET:
+"  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)"
+REPLACEMENT:
+"  const [projectToDelete, setProjectToDelete] = useState<any | null>(null)"
+
+--- REPLACEMENT 41 ---
+TARGET:
+"                <button className=\"sidebar-dropdown-item\" onClick={handleCreateFolder}>\n                  <span>📁</span>\n                  Create folder"
+REPLACEMENT:
+"                <button className=\"sidebar-dropdown-item\" onClick={handleCreateFolder}>\n                  <span style={{ display: 'flex', alignItems: 'center', color: '#6b7280' }}>\n                    <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"currentColor\">\n                      <path d=\"M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z\" />\n                    </svg>\n                  </span>\n                  Create folder"
+
+--- REPLACEMENT 42 ---
+TARGET:
+"  const [newProjectName, setNewProjectName] = useState('')"
+REPLACEMENT:
+"  const [newProjectName, setNewProjectName] = useState('')\n  const [newProjectNameError, setNewProjectNameError] = useState('')"
+
+--- REPLACEMENT 43 ---
+TARGET:
+  const handleCreateProject = (folderId?: string) => {
+    setNewProjectName('')
+    setCreateProjectModal({ open: true, folderId })
+    setIsAddMenuOpen(false)
+    setFolderMenuOpenId(null)
+  }
+REPLACEMENT:
+  const handleCreateProject = (folderId?: string) => {
+    setNewProjectName('')
+    setNewProjectNameError('')
+    setCreateProjectModal({ open: true, folderId })
+    setIsAddMenuOpen(false)
+    setFolderMenuOpenId(null)
+  }
+
+--- REPLACEMENT 44 ---
+TARGET:
+    const folderId = createProjectModal.folderId
+    const isDuplicate = projects.some(p => p.folderId === folderId && p.name.toLowerCase() === name.toLowerCase())
+    if (isDuplicate) {
+      // Show error - handled inline
+      return
+    }
+REPLACEMENT:
+    const folderId = createProjectModal.folderId
+    const isDuplicate = projects.some(p => p.folderId === folderId && p.name.toLowerCase() === name.toLowerCase())
+    if (isDuplicate) {
+      setNewProjectNameError('A project with this name already exists in this location.')
+      return
+    }
+
+--- REPLACEMENT 45 ---
+TARGET:
+"                          <label className=\"sidebar-dropdown-item\" style={{ cursor: 'pointer', margin: 0 }}>\n                            <span>🎨</span>\n                            Change color\n                            <input \n                              type=\"color\" \n                              value={folder.color || '#3b82f6'}\n                              onChange={(e) => {\n                                setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, color: e.target.value } : f))\n                              }}\n                              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}\n                            />\n                          </label>"
+REPLACEMENT:
+"                          <button className=\"sidebar-dropdown-item\" onClick={() => { setCustomizeFolder(folder); setFolderMenuOpenId(null); }}>\n                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>\n                              <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"2\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14\"/></svg>\n                            </span>\n                            Customize folder\n                          </button>"
+
+--- REPLACEMENT 46 ---
+TARGET:
+"import { useMemo, useState, useEffect, useRef } from 'react'\nimport { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'\nimport KanbanBoard, { type KanbanColumnLegacy, type KanbanTask } from './components/KanbanBoard'\nimport { useActiveProject } from './contexts/ActiveProjectContext'\n"
+REPLACEMENT:
+"import { useMemo, useState, useEffect, useRef } from 'react'\nimport { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'\nimport KanbanBoard, { type KanbanColumnLegacy, type KanbanTask } from './components/KanbanBoard'\nimport { useActiveProject } from './contexts/ActiveProjectContext'\n\nconst FOLDER_ICONS: Record<string, string> = {\n  default: 'M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z',\n  code: 'M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',\n  design: 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z',\n  music: 'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z',\n  image: 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',\n  video: 'M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z',\n  download: 'M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z',\n  star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',\n  work: 'M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.04 1 13.64 1c-1.3 0-2.43.52-3.27 1.36L10 2.73l-.37-.37C8.79 1.52 7.66 1 6.36 1 3.96 1 2 2.98 2 5.64c0 .48.11.92.18 1.36H0v14h24V6h-4z',\n  lock: 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z',\n  chart: 'M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12
+<truncated 1417 bytes>
+
+--- REPLACEMENT 47 ---
+TARGET:
+"                    <span className=\"folder-icon\" style={{ display: 'flex', alignItems: 'center' }}>\n                      <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill={folder.color || '#3b82f6'}>\n                        <path d=\"M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z\" />\n                      </svg>\n                    </span>"
+REPLACEMENT:
+"                    <span className=\"folder-icon\" style={{ display: 'flex', alignItems: 'center' }}>\n                      <FolderSVG color={folder.color} icon={folder.icon} size={18} />\n                    </span>"
+
+--- REPLACEMENT 48 ---
+TARGET:
+  const [createFolderModal, setCreateFolderModal] = useState<{ open: boolean; name: string; color: string; icon: string; error?: string }>({ open: false, name: '', color: '#3b82f6', icon: 'default' })
+  const [customizeFolder, setCustomizeFolder] = useState<any | null>(null)
+REPLACEMENT:
+  const [createFolderModal, setCreateFolderModal] = useState<{ open: boolean; name: string; color: string; icon: string; error?: string }>({ open: false, name: '', color: '#3b82f6', icon: 'default' })
+  const [customizeFolder, setCustomizeFolder] = useState<any | null>(null)
+  
+  // Icon Picker state
+  const [iconPickerState, setIconPickerState] = useState<{ open: boolean; onSelect: (id: string) => void } | null>(null)
+  const [iconSearchQuery, setIconSearchQuery] = useState('')
+  const [activeIconCategory, setActiveIconCategory] = useState(ICON_CATEGORIES[0].id)
+
+
+--- REPLACEMENT 49 ---
+TARGET:
+"            </div>\n          </div>\n        </div>\n      )}\n\n    </div>\n  )\n}\n"
+REPLACEMENT:
+"            </div>\n          </div>\n        </div>\n      )}\n\n      {/* ICON PICKER MODAL */}\n      {iconPickerState?.open && (\n        <div className=\"rename-modal-overlay\" onClick={() => setIconPickerState(null)} style={{ zIndex: 1000 }}>\n          <div className=\"icon-picker-modal\" onClick={e => e.stopPropagation()}>\n            <div className=\"icon-picker-header\">\n              <h3>Select Icon</h3>\n              <input \n                type=\"text\" \n                placeholder=\"Search 10,000+ icons...\" \n                className=\"icon-search-input\"\n                value={iconSearchQuery}\n                onChange={e => setIconSearchQuery(e.target.value)}\n              />\n            </div>\n            <div className=\"icon-picker-body\">\n              <div className=\"icon-categories-sidebar\">\n                {ICON_CATEGORIES.map(cat => (\n                  <button \n                    key={cat.id} \n                    className={`icon-cat-btn ${activeIconCategory === cat.id ? 'active' : ''}`}\n                    onClick={() => { setActiveIconCategory(cat.id); setIconSearchQuery(''); }}\n                  >\n                    {cat.name}\n                  </button>\n                ))}\n              </div>\n              <div className=\"icon-grid-scrollarea\">\n                {ICON_CATEGORIES.map(cat => {\n                  if (iconSearchQuery) return null;\n                  if (cat.id !== activeIconCategory) return null;\n                  return (\n                    <div className=\"icon-grid-massive\" key={cat.id}>\n                      {cat.icons.map(iconDef => {\n                        const IconComp = iconDef.icon;\n                        return (\n                          <button \n                            key={iconDef.id} \n                            className=\"massive-icon-btn\" \n                            title={iconDef.name}\n                            onClick={() => {\n                              iconPickerState.onSelect(iconDef.id);\n      
+<truncated 1641 bytes>
+
+--- REPLACEMENT 50 ---
+TARGET:
+"      {/* Icon inside */}\n      <g transform=\"translate(10, 11) scale(0.833)\">\n        {ReactIcon ? (\n          <ReactIcon size={24} color=\"rgba(255,255,255,0.9)\" />\n        ) : (\n          <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\">\n            <path d={iconPath} fill=\"rgba(255,255,255,0.9)\" />\n          </svg>\n        )}\n      </g>\n    </svg>\n  )\n}"
+REPLACEMENT:
+"      {/* Icon inside */}\n      <g transform=\"translate(10, 11) scale(0.833)\">\n        {ReactIcon ? (\n          <ReactIcon size={24} color=\"rgba(255,255,255,0.9)\" />\n        ) : (\n          <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\">\n            <path d={iconPath || undefined} fill=\"rgba(255,255,255,0.9)\" />\n          </svg>\n        )}\n      </g>\n    </svg>\n  )\n}"
+
+--- REPLACEMENT 51 ---
+TARGET:
+"  const [themeMode] = useState<'Light' | 'Dark'>('Light')"
+REPLACEMENT:
+"  const [themeMode] = useState<'Light' | 'Dark'>('Dark')"
