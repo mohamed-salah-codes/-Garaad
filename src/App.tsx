@@ -240,34 +240,26 @@ const getKanbanColumnsFromTasks = (taskList: TaskItem[]): KanbanColumnLegacy[] =
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<ProjectLayout isDashboard />} />
+      <Route path="/" element={<Navigate to="/project/p1/tasks" replace />} />
       <Route path="/project/:projectId/:pageKey" element={<ProjectLayout />} />
     </Routes>
   )
 }
 
-function ProjectLayout({ isDashboard = false }: { isDashboard?: boolean }) {
+function ProjectLayout() {
   const { projectId, pageKey } = useParams()
   const navigate = useNavigate()
   const { currentProject, setCurrentProject, projects, setProjects, folders, setFolders } = useActiveProject()
 
   useEffect(() => {
-    if (isDashboard) return;
     const proj = projects.find((p) => p.id === projectId)
     if (proj && currentProject?.id !== proj.id) {
       setCurrentProject(proj)
     }
-  }, [projectId, projects, currentProject, setCurrentProject, isDashboard])
+  }, [projectId, projects, currentProject, setCurrentProject])
 
-  const activePage = isDashboard ? 'dashboard' : ((pageKey as PageKey) || 'tasks')
-  const setActivePage = (key: PageKey | 'dashboard') => {
-    if (key === 'dashboard') {
-      navigate('/dashboard')
-    } else {
-      navigate(`/project/${projectId}/${key}`)
-    }
-  }
+  const activePage = (pageKey as PageKey) || 'tasks'
+  const setActivePage = (key: PageKey) => navigate(`/project/${projectId}/${key}`)
 
   const selectedProjectId = currentProject?.id ?? ''
   const setSelectedProjectId = (id: string) => {
@@ -784,24 +776,6 @@ function ProjectLayout({ isDashboard = false }: { isDashboard?: boolean }) {
           </div>
         </div>
 
-        <div className="sidebar-section">
-          <button
-            type="button"
-            className={`project-link ${activePage === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActivePage('dashboard')}
-          >
-            <span className="folder-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="9"></rect>
-                <rect x="14" y="3" width="7" height="5"></rect>
-                <rect x="14" y="12" width="7" height="9"></rect>
-                <rect x="3" y="16" width="7" height="5"></rect>
-              </svg>
-            </span>
-            <span>Dashboard</span>
-          </button>
-        </div>
-
         <div className="sidebar-section project-list-section">
           <div className="section-header" style={{ position: 'relative' }}>
             <span>Projects</span>
@@ -1009,65 +983,6 @@ function ProjectLayout({ isDashboard = false }: { isDashboard?: boolean }) {
         )}
 
         <section className="page-body">
-          {activePage === 'dashboard' && (
-            <div className="dashboard-page">
-              <header className="dashboard-header">
-                <h1>Overview</h1>
-                <p>Track progress across all your projects</p>
-              </header>
-              <div className="dashboard-stats-row">
-                <div className="dashboard-stat-card">
-                  <div className="stat-value">{projects.length}</div>
-                  <div className="stat-label">Total Projects</div>
-                </div>
-                <div className="dashboard-stat-card">
-                  <div className="stat-value">{projects.filter(p => p.status === 'Active').length}</div>
-                  <div className="stat-label">Active Projects</div>
-                </div>
-                <div className="dashboard-stat-card">
-                  <div className="stat-value">{projects.filter(p => p.status === 'Completed').length}</div>
-                  <div className="stat-label">Completed Projects</div>
-                </div>
-              </div>
-              
-              <div className="dashboard-projects-grid">
-                {projects.map(project => {
-                  const projectTasks = tasks ? tasks.filter((t: any) => t.projectId === project.id) : [];
-                  const completedTasks = projectTasks.filter((t: any) => t.status === 'Completed').length;
-                  const totalProjectTasks = projectTasks.length;
-                  const calculatedProgress = totalProjectTasks > 0 ? Math.round((completedTasks / totalProjectTasks) * 100) : project.progress;
-
-                  return (
-                    <div key={project.id} className="dashboard-project-card" onClick={() => setSelectedProjectId(project.id)}>
-                      <div className="project-card-header">
-                        <h3>{project.name}</h3>
-                        <span className={`project-status-badge status-${project.status.toLowerCase()}`}>{project.status}</span>
-                      </div>
-                      <div className="project-card-body">
-                        <div className="project-team">
-                          {project.team.slice(0, 3).map((member, idx) => (
-                            <div key={idx} className="team-avatar-small" title={member}>{member.charAt(0)}</div>
-                          ))}
-                          {project.team.length > 3 && (
-                            <div className="team-avatar-small">+ {project.team.length - 3}</div>
-                          )}
-                        </div>
-                        <div className="project-task-count">
-                          <span>{totalProjectTasks} tasks</span>
-                        </div>
-                      </div>
-                      <div className="project-card-footer">
-                        <div className="progress-bar-container">
-                          <div className="progress-bar-fill" style={{ width: `${calculatedProgress}%` }}></div>
-                        </div>
-                        <span className="progress-text">{calculatedProgress}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {activePage === 'calendar' && (
             <div className="calendar-page">
