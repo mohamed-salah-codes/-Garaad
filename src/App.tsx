@@ -714,6 +714,13 @@ function ProjectLayout() {
     })
   }
 
+  const handleUpdateSelectedTask = (updates: Partial<TaskItem>) => {
+    if (!selectedTask) return;
+    const updatedTask = { ...selectedTask, ...updates };
+    setSelectedTask(updatedTask);
+    setTasks(current => current.map(t => t.id === updatedTask.id ? updatedTask : t));
+  }
+
   const handleTaskDropToCompleted = (task: KanbanTask, pending: KanbanColumnLegacy[]) => {
     const originalTask = tasks.find(t => t.id === task.id)
     if (originalTask) {
@@ -1609,67 +1616,116 @@ function ProjectLayout() {
             <div className="task-details-body">
               {/* Left content */}
               <div className="task-details-left">
-                <h1 className="task-details-title">{selectedTask.title}</h1>
+                <input
+                  className="task-details-title-input"
+                  value={selectedTask.title}
+                  onChange={(e) => handleUpdateSelectedTask({ title: e.target.value })}
+                  placeholder="Task title"
+                />
 
                 {/* Meta fields */}
                 <div className="task-details-fields">
                   <div className="task-details-field">
                     <span className="field-label">Status</span>
                     <div className="field-value">
-                      <span className={`task-status-pill status-pill-${selectedTask.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                        {selectedTask.status === 'In Progress' && '🛠'}
-                        {selectedTask.status === 'New Task' && '🆕'}
-                        {selectedTask.status === 'Scheduled' && '📅'}
-                        {selectedTask.status === 'Completed' && '✅'}
-                        {' '}{selectedTask.status}
-                      </span>
+                      <select
+                        className="task-details-select"
+                        value={selectedTask.status}
+                        onChange={(e) => handleUpdateSelectedTask({ status: e.target.value as TaskItem['status'] })}
+                      >
+                        <option value="New Task">New Task</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                      </select>
                     </div>
                   </div>
                   <div className="task-details-field">
                     <span className="field-label">Type</span>
                     <div className="field-value">
                       <span className="type-color-dot" style={{ backgroundColor: '#0d9488' }}></span>
-                      {selectedTask.type}
+                      <input
+                        className="task-details-input"
+                        value={selectedTask.type}
+                        onChange={(e) => handleUpdateSelectedTask({ type: e.target.value })}
+                        placeholder="Task type"
+                      />
                     </div>
                   </div>
                   <div className="task-details-field">
                     <span className="field-label">Due date</span>
                     <div className="field-value">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      {selectedTask.due}
+                      <input
+                        type="date"
+                        className="task-details-input"
+                        value={selectedTask.due === 'No due date' ? '' : selectedTask.due}
+                        onChange={(e) => handleUpdateSelectedTask({ due: e.target.value || 'No due date' })}
+                      />
                     </div>
                   </div>
                   <div className="task-details-field">
                     <span className="field-label">Assignee</span>
                     <div className="field-value">
                       <div className="task-details-avatar">{selectedTask.assigneeAvatar}</div>
-                      {selectedTask.assignee}
+                      <input
+                        className="task-details-input"
+                        value={selectedTask.assignee}
+                        onChange={(e) => handleUpdateSelectedTask({
+                          assignee: e.target.value,
+                          assigneeAvatar: e.target.value ? e.target.value.charAt(0).toUpperCase() : ''
+                        })}
+                        placeholder="Assignee"
+                      />
                     </div>
                   </div>
                   <div className="task-details-field">
                     <span className="field-label">Estimated time</span>
                     <div className="field-value">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      <strong>{selectedTask.estimatedHours}h</strong>
+                      <input
+                        type="number"
+                        className="task-details-input"
+                        style={{ width: '60px' }}
+                        value={selectedTask.estimatedHours}
+                        onChange={(e) => handleUpdateSelectedTask({ estimatedHours: parseFloat(e.target.value) || 0 })}
+                      />
+                      <span style={{ marginLeft: '-4px' }}>h</span>
                       {selectedTask.actualHours !== undefined && (
-                        <span className="logged-time"> (logged {selectedTask.actualHours}h)</span>
+                        <span className="logged-time" style={{ marginLeft: '8px' }}> (logged {selectedTask.actualHours}h)</span>
                       )}
                     </div>
                   </div>
                   <div className="task-details-field">
                     <span className="field-label">Priority</span>
-                    <div className="field-value">{selectedTask.priority}</div>
-                  </div>
-                  {selectedTask.tags.length > 0 && (
-                    <div className="task-details-field">
-                      <span className="field-label">Tags</span>
-                      <div className="field-value task-tags-row">
-                        {selectedTask.tags.map(tag => (
-                          <span key={tag} className="task-tag-chip">{tag}</span>
-                        ))}
-                      </div>
+                    <div className="field-value">
+                      <select
+                        className="task-details-select"
+                        value={selectedTask.priority}
+                        onChange={(e) => handleUpdateSelectedTask({ priority: e.target.value as TaskItem['priority'] })}
+                      >
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="Lowest">Lowest</option>
+                        <option value="None">None</option>
+                      </select>
                     </div>
-                  )}
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Tags</span>
+                    <div className="field-value task-tags-row">
+                      <input
+                        className="task-details-input"
+                        style={{ maxWidth: '300px' }}
+                        placeholder="Comma separated tags..."
+                        value={selectedTask.tags.join(', ')}
+                        onChange={(e) => handleUpdateSelectedTask({
+                          tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
+                        })}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -1698,9 +1754,12 @@ function ProjectLayout() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     Description
                   </div>
-                  <p className="task-details-description-text">
-                    {selectedTask.description || 'Task description'}
-                  </p>
+                  <textarea
+                    className="task-details-textarea"
+                    value={selectedTask.description}
+                    onChange={(e) => handleUpdateSelectedTask({ description: e.target.value })}
+                    placeholder="Task description"
+                  />
                 </div>
 
                 {/* Subtasks */}
