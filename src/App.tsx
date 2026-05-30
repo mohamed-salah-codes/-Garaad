@@ -340,7 +340,7 @@ function ProjectLayout() {
 
   // Completion modal state
   const [showCompletionModal, setShowCompletionModal] = useState(false)
-  const [pendingCompletionColumns, setPendingCompletionColumns] = useState<KanbanColumnLegacy[] | null>(null)
+  const [pendingOriginalStatus, setPendingOriginalStatus] = useState<TaskItem['status'] | null>(null)
 
   // Status Modals state
   const [showEditStatusesModal, setShowEditStatusesModal] = useState(false)
@@ -714,9 +714,17 @@ function ProjectLayout() {
   }
 
   const handleTaskDropToCompleted = (task: KanbanTask, pending: KanbanColumnLegacy[]) => {
+    const originalTask = tasks.find(t => t.id === task.id)
+    if (originalTask) {
+      setPendingOriginalStatus(originalTask.status)
+    }
+
     setPendingTaskId(task.id)
     setPendingTaskEstimated(`${task.estimatedHours || 0}h`)
-    setPendingCompletionColumns(pending)
+    
+    // Update state immediately so it doesn't snap back visually
+    handleKanbanColumnsChange(pending)
+    
     setCompletionDate(new Date().toISOString().split('T')[0])
     setCompletionHours('0')
     setCompletionMode('Manual time')
@@ -724,20 +732,27 @@ function ProjectLayout() {
   }
 
   const handleCompletionSave = () => {
-    if (pendingCompletionColumns) {
-      handleKanbanColumnsChange(pendingCompletionColumns)
+    if (pendingTaskId) {
       setTasks(current => current.map(t => 
         t.id === pendingTaskId 
           ? { ...t, actualHours: parseFloat(completionHours) || 0, completedAt: new Date().toISOString() }
           : t
       ))
     }
-    setPendingCompletionColumns(null)
+    setPendingOriginalStatus(null)
     setShowCompletionModal(false)
   }
 
   const handleCompletionCancel = () => {
-    setPendingCompletionColumns(null)
+    // Revert the task status
+    if (pendingTaskId && pendingOriginalStatus) {
+      setTasks(current => current.map(t => 
+        t.id === pendingTaskId 
+          ? { ...t, status: pendingOriginalStatus }
+          : t
+      ))
+    }
+    setPendingOriginalStatus(null)
     setShowCompletionModal(false)
   }
 
