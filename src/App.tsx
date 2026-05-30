@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-do
 import KanbanBoard, { type KanbanColumnLegacy, type KanbanTask } from './components/KanbanBoard'
 import { useActiveProject } from './contexts/ActiveProjectContext'
 import { ICON_CATEGORIES, getIconById } from './constants/iconLibrary'
+import Login from './pages/Login'
 
 
 const FOLDER_ICONS: Record<string, string> = {
@@ -253,6 +254,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/project/p1/tasks" replace />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/project/:projectId/:pageKey" element={<ProjectLayout />} />
     </Routes>
   )
