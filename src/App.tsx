@@ -67,6 +67,14 @@ type Subtask = {
   done: boolean
 }
 
+type TaskComment = {
+  id: string
+  author: string
+  text: string
+  timestamp: string
+  date: string
+}
+
 type TaskItem = {
   id: string
   title: string
@@ -87,6 +95,7 @@ type TaskItem = {
   assigneeAvatar: string
   subtasks: Subtask[]
   projectId: string
+  comments?: TaskComment[]
 }
 
 const projectSections: Array<{ key: PageKey; label: string }> = [
@@ -145,6 +154,9 @@ const initialTasks: TaskItem[] = [
     subtasks: [
       { id: 's1', title: 'Layout header', done: true },
       { id: 's2', title: 'Style cards', done: false },
+    ],
+    comments: [
+      { id: 'c1', author: 'Me', text: 'kolkl', timestamp: '09:34', date: '30 May' }
     ],
     projectId: 'p1',
     createdAt: new Date().toISOString(),
@@ -690,12 +702,14 @@ function ProjectLayout() {
       assignee: 'Me',
       assigneeAvatar: 'M',
       subtasks: newTaskSubtasks,
+      comments: [],
       projectId: selectedProjectId,
       createdAt: new Date().toISOString(),
     }
     setTasks((current) => [newTask, ...current])
     setShowTaskModal(false)
   }
+  const [chatInputValue, setChatInputValue] = useState('')
 
   const handleKanbanColumnsChange = (newColumns: KanbanColumnLegacy[]) => {
     setTasks((current) => {
@@ -1840,14 +1854,53 @@ function ProjectLayout() {
 
               {/* Right: activity feed */}
               <div className="task-details-right">
-                <div className="task-chat-messages"></div>
-                <div className="task-chat-input-row">
+                <div className="task-chat-messages">
+                  {selectedTask.comments?.map((comment, index, arr) => {
+                    const showDate = index === 0 || arr[index - 1].date !== comment.date;
+                    return (
+                      <div key={comment.id}>
+                        {showDate && <div className="chat-date-separator">{comment.date}</div>}
+                        <div className={`chat-message ${comment.author === 'Me' ? 'sent' : 'received'}`}>
+                          <div className="chat-bubble">
+                            <span className="chat-text">{comment.text}</span>
+                            <span className="chat-time">{comment.timestamp}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <form className="task-chat-input-row" onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!chatInputValue.trim()) return
+                  
+                  const now = new Date()
+                  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                  
+                  const newComment: TaskComment = {
+                    id: `c${Date.now()}`,
+                    author: 'Me',
+                    text: chatInputValue,
+                    timestamp: time,
+                    date: date
+                  }
+                  
+                  const updatedComments = [...(selectedTask.comments || []), newComment]
+                  handleUpdateSelectedTask({ comments: updatedComments })
+                  setChatInputValue('')
+                }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                  <input className="task-chat-input" placeholder="Type a message..." />
-                  <button className="task-chat-send">
+                  <input 
+                    className="task-chat-input" 
+                    placeholder="Type a message..." 
+                    value={chatInputValue}
+                    onChange={e => setChatInputValue(e.target.value)}
+                  />
+                  <button type="submit" className="task-chat-send" disabled={!chatInputValue.trim()} style={{ opacity: chatInputValue.trim() ? 1 : 0.5 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   </button>
-                </div>
+                </form>
               </div>
             </div>
           </div>
