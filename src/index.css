@@ -4058,6 +4058,91 @@ tbody td {
   color: #e2e8f0;
 }
 
+/* Rich Text Toolbar */
+.rich-text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.toolbar-btn:hover {
+  background-color: #2d2d30;
+  color: #e2e8f0;
+}
+
+.toolbar-btn.text-format-btn {
+  width: auto;
+  padding: 0 8px;
+  gap: 6px;
+  color: #e2e8f0;
+}
+
+.format-dropdown-container {
+  position: relative;
+}
+
+.format-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: #1c1c1e;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 140px;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.format-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.format-dropdown-item:hover {
+  background-color: #2d2d30;
+  color: #f8fafc;
+}
+
+.format-dropdown-item.active {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: #3f3f46;
+  margin: 0 4px;
+}
+
 /* Editable fields styling */
 .task-details-input,
 .task-details-select {
