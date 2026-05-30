@@ -4,6 +4,7 @@ import KanbanBoard, { type KanbanColumnLegacy, type KanbanTask } from './compone
 import { useActiveProject } from './contexts/ActiveProjectContext'
 import { ICON_CATEGORIES, getIconById } from './constants/iconLibrary'
 import Login from './pages/Login'
+import { useLocalStorage } from './hooks/useLocalStorage'
 
 
 const FOLDER_ICONS: Record<string, string> = {
@@ -264,6 +265,14 @@ function ProjectLayout() {
   const { projectId, pageKey } = useParams()
   const navigate = useNavigate()
   const { currentProject, setCurrentProject, projects, setProjects, folders, setFolders } = useActiveProject()
+  
+  const [isAuthenticated] = useLocalStorage('garaad_auth', false)
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   useEffect(() => {
     const proj = projects.find((p) => p.id === projectId)
@@ -281,7 +290,7 @@ function ProjectLayout() {
   }
 
   const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Kanban')
-  const [notes, setNotes] = useState<NoteItem[]>(notesSeed)
+  const [notes, setNotes] = useLocalStorage<NoteItem[]>('garaad_notes', notesSeed)
   const [selectedNoteId, setSelectedNoteId] = useState(notesSeed[0].id)
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -314,6 +323,7 @@ function ProjectLayout() {
     const closeMenus = () => {
       setIsAddMenuOpen(false)
       setFolderMenuOpenId(null)
+      setProfileMenuOpen(false)
     }
     document.addEventListener('click', closeMenus)
     return () => document.removeEventListener('click', closeMenus)
@@ -332,7 +342,17 @@ function ProjectLayout() {
       return next
     })
   }
-  const [tasks, setTasks] = useState(initialTasks)
+  
+  const [tasks, setTasks] = useLocalStorage<TaskItem[]>('garaad_tasks', initialTasks)
+  const [userProfile, setUserProfile] = useLocalStorage('garaad_profile', {
+    firstName: 'MOHAMED',
+    lastName: 'AHMED SALAH',
+    email: 'm00252617466805@gmail.com',
+    country: '',
+    phone: '',
+    birthday: '',
+  })
+  
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null)
   const [showFormatDropdown, setShowFormatDropdown] = useState(false)
@@ -350,8 +370,10 @@ function ProjectLayout() {
   const [newTaskEstimatedHours, setNewTaskEstimatedHours] = useState<number>(0)
   const [newTaskTags, setNewTaskTags] = useState<string[]>([])
   const [newSubtask, setNewSubtask] = useState('')
+
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<'My profile' | 'Preferences' | 'Integrations' | 'Security'>('My profile')
   const [newTaskSubtasks, setNewTaskSubtasks] = useState<Subtask[]>([])
-  const [settingsTab, setSettingsTab] = useState<'Details' | 'Configuration'>('Configuration')
 
   // Completion modal state
   const [showCompletionModal, setShowCompletionModal] = useState(false)
@@ -364,10 +386,10 @@ function ProjectLayout() {
   const [createStatusName, setCreateStatusName] = useState('')
   const [createStatusGroup, setCreateStatusGroup] = useState<'Open' | 'Closed'>('Closed')
   type TaskStatus = { id: string; name: string; group: string; icon: string | null; isDefault: boolean; isNew?: boolean; isCompleted?: boolean }
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([
+  const [taskStatuses, setTaskStatuses] = useLocalStorage<TaskStatus[]>('garaad_task_statuses', [
     { id: 'status-new-task', name: 'New task', group: 'Open', icon: null, isDefault: true, isNew: true },
-    { id: 'status-scheduled', name: 'Scheduled', group: 'Open', icon: '📅', isDefault: false },
-    { id: 'status-in-progress', name: 'In Progress', group: 'Open', icon: '🛠', isDefault: false },
+    { id: 'status-scheduled', name: 'Scheduled', group: 'Open', icon: '⏳', isDefault: false },
+    { id: 'status-in-progress', name: 'In Progress', group: 'Open', icon: '⏱️', isDefault: false },
     { id: 'status-completed', name: 'Completed', group: 'Closed', icon: '✅', isDefault: true, isCompleted: true },
   ])
   const [editingTaskStatus, setEditingTaskStatus] = useState<{ id: string, name: string, icon: string | null } | null>(null)
@@ -807,13 +829,29 @@ function ProjectLayout() {
     <div className={`app-shell ${themeMode === 'Dark' ? 'dark-mode' : ''} ${activePage === 'settings' ? 'settings-active' : ''}`}>
       {activePage !== 'settings' && (
         <aside className="sidebar">
-          <div className="sidebar-profile">
-          <div className="profile-avatar">M</div>
-          <div className="profile-meta">
-            <div className="profile-title">My work</div>
-            <div className="profile-subtitle">Project management</div>
+          <div className="sidebar-profile" onClick={(e) => { e.stopPropagation(); setProfileMenuOpen(!profileMenuOpen); }} style={{ cursor: 'pointer', position: 'relative' }}>
+            <div className="profile-avatar">{userProfile.firstName.charAt(0) || 'M'}</div>
+            <div className="profile-meta">
+              <div className="profile-title">{userProfile.firstName} {userProfile.lastName}</div>
+              <div className="profile-subtitle">Project management</div>
+            </div>
+            {profileMenuOpen && (
+              <div className="profile-dropdown-menu" style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', zIndex: 10, marginBottom: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                <button 
+                  className="menu-item" 
+                  style={{ width: '100%', textAlign: 'left', color: 'var(--danger)', padding: '8px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 500 }}
+                  onClick={() => {
+                    localStorage.removeItem('garaad_auth')
+                    navigate('/login', { replace: true })
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  Log out
+                </button>
+              </div>
+            )}
           </div>
-        </div>
 
         <div className="sidebar-section project-list-section">
           <div className="section-header" style={{ position: 'relative' }}>
@@ -961,16 +999,28 @@ function ProjectLayout() {
             
             <div className="settings-tabs-container">
               <button 
-                className={`settings-tab ${settingsTab === 'Details' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('Details')}
+                className={`settings-tab ${settingsTab === 'My profile' ? 'active' : ''}`}
+                onClick={() => setSettingsTab('My profile')}
               >
-                Details
+                My profile
               </button>
               <button 
-                className={`settings-tab ${settingsTab === 'Configuration' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('Configuration')}
+                className={`settings-tab ${settingsTab === 'Preferences' ? 'active' : ''}`}
+                onClick={() => setSettingsTab('Preferences')}
               >
-                Configuration
+                Preferences
+              </button>
+              <button 
+                className={`settings-tab ${settingsTab === 'Integrations' ? 'active' : ''}`}
+                onClick={() => setSettingsTab('Integrations')}
+              >
+                Integrations
+              </button>
+              <button 
+                className={`settings-tab ${settingsTab === 'Security' ? 'active' : ''}`}
+                onClick={() => setSettingsTab('Security')}
+              >
+                Security
               </button>
             </div>
           </>
@@ -1007,7 +1057,7 @@ function ProjectLayout() {
                     onClick={() => {
                       if (section.key === 'settings') {
                         setActivePage('settings')
-                        setSettingsTab('Configuration')
+                        setSettingsTab('Preferences')
                       } else {
                         setActivePage(section.key)
                       }
@@ -1198,7 +1248,7 @@ function ProjectLayout() {
                     Workflow Board
                   </button>
                 </div>
-                <button type="button" className="icon-button" onClick={() => { setActivePage('settings'); setSettingsTab('Configuration'); }}>
+                <button type="button" className="icon-button" onClick={() => { setActivePage('settings'); setSettingsTab('Preferences'); }}>
                   ⚙
                 </button>
               </div>
@@ -1417,88 +1467,129 @@ function ProjectLayout() {
             </div>
           )}
 
-          {activePage === 'settings' && settingsTab === 'Details' && (
+          {activePage === 'settings' && settingsTab === 'My profile' && (
             <div className="configuration-page">
-              <div className="config-section">
-                <h3>Project details</h3>
-                <div className="settings-field-row">
-                  <span className="settings-label">Project name</span>
-                  <div className="settings-value-group">
-                    <span className="settings-value">{selectedProject?.name || 'kol'}</span>
-                    <button className="icon-button small-edit-btn">✎</button>
+              <div className="profile-settings-container">
+                <div className="profile-header-card">
+                  <div className="profile-avatar-large">
+                    {userProfile.firstName.charAt(0) || 'M'}
+                    <button className="avatar-edit-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </button>
+                  </div>
+                  <div className="profile-header-info">
+                    <h2>{userProfile.firstName} {userProfile.lastName}</h2>
+                    <p>{userProfile.email} <button className="text-btn">change email</button></p>
                   </div>
                 </div>
-              </div>
 
-              <div className="config-section border-none">
-                <h3>Delete project</h3>
-                <p className="settings-warning-text">
-                  After deleting this project you will lose all related information<br/>
-                  including tasks, events, files, notes etc. You will not be able to<br/>
-                  recover it later, so think twice before doing this.
-                </p>
-                <button className="danger-text-btn" onClick={() => setProjectToDelete(selectedProject)}>
-                  🗑 Delete project
-                </button>
+                <div className="profile-fields-grid">
+                  <div className="form-group">
+                    <label>First name</label>
+                    <input 
+                      type="text" 
+                      value={userProfile.firstName} 
+                      onChange={(e) => setUserProfile({...userProfile, firstName: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Last name</label>
+                    <input 
+                      type="text" 
+                      value={userProfile.lastName} 
+                      onChange={(e) => setUserProfile({...userProfile, lastName: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Country</label>
+                    <select 
+                      value={userProfile.country}
+                      onChange={(e) => setUserProfile({...userProfile, country: e.target.value})}
+                    >
+                      <option value="">Country</option>
+                      <option value="US">United States</option>
+                      <option value="SO">Somalia</option>
+                      <option value="UK">United Kingdom</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <div className="phone-input-group">
+                      <div className="phone-prefix">+000</div>
+                      <input 
+                        type="text" 
+                        placeholder="000 000 00 00" 
+                        value={userProfile.phone}
+                        onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Birthday</label>
+                    <div className="birthday-inputs">
+                      <select><option>Day</option></select>
+                      <select><option>Month</option></select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="settings-actions">
+                  <button 
+                    className="primary-button settings-save-btn"
+                    onClick={() => {
+                      if (!navigator.onLine) {
+                        alert('Fadlan khadka internet-ka hubi. Profile-ka offline laguma beddeli karo.')
+                      } else {
+                        alert('Profile saved successfully!')
+                      }
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+
+                <div className="config-section delete-account-section">
+                  <h3>Delete account</h3>
+                  <p className="settings-warning-text">
+                    After deleting your account you will lose all related information<br/>
+                    including tasks, events, projects, notes etc. You will not be able<br/>
+                    to recover it later, so think twice before doing this.
+                  </p>
+                  <button className="danger-text-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Delete account
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {activePage === 'settings' && settingsTab === 'Configuration' && (
+          {activePage === 'settings' && settingsTab === 'Security' && (
+            <div className="configuration-page">
+              <div className="profile-settings-container security-container">
+                <div className="form-group max-w-sm">
+                  <label>Current password</label>
+                  <input type="password" />
+                </div>
+                <div className="form-group max-w-sm">
+                  <label>New password</label>
+                  <input type="password" />
+                </div>
+                <div className="form-group max-w-sm">
+                  <label>Confirm new password</label>
+                  <input type="password" />
+                </div>
+                <div className="settings-actions mt-4">
+                  <button className="primary-button settings-save-btn">Change password</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePage === 'settings' && (settingsTab === 'Preferences' || settingsTab === 'Integrations') && (
             <div className="configuration-page">
               <div className="config-section">
-                <h3>Task statuses</h3>
-                <div className="config-row">
-                  <div className="status-flow">
-                    <div className="status-badge">
-                      <span className="status-color new"></span> New task
-                    </div>
-                    <span className="arrow">→</span>
-                    <div className="status-badge">
-                      <span className="status-icon">📅</span> Scheduled
-                    </div>
-                    <span className="arrow">→</span>
-                    <div className="status-badge">
-                      <span className="status-icon">🛠</span> In Progress
-                    </div>
-                    <span className="arrow">→</span>
-                    <div className="status-badge completed-badge">
-                      <span className="status-icon">✅</span> Completed
-                    </div>
-                  </div>
-                </div>
-                <button className="edit-btn" onClick={() => setShowEditStatusesModal(true)}>Edit statuses</button>
-              </div>
-
-              <div className="config-section">
-                <h3>Task types</h3>
-                <div className="config-row">
-                  <div className="type-badges">
-                    <div className="type-badge"><span className="type-color operational"></span> Operational</div>
-                    <div className="type-badge"><span className="type-color health"></span> Health</div>
-                    <div className="type-badge"><span className="type-color home"></span> Home and family</div>
-                    <div className="type-badge"><span className="type-color finance"></span> Finance</div>
-                    <div className="type-badge"><span className="type-color learning"></span> Learning</div>
-                    <div className="type-badge"><span className="type-color planning"></span> Planning</div>
-                    <div className="type-badge"><span className="type-color strategic"></span> Strategic</div>
-                    <div className="type-badge"><span className="type-color technical"></span> Technical</div>
-                  </div>
-                </div>
-                <button className="edit-btn" onClick={() => setShowEditTypesModal(true)}>Edit types</button>
-              </div>
-
-              <div className="config-section border-none">
-                <h3>Event types</h3>
-                <div className="config-row">
-                  <div className="type-badges">
-                    {eventTypes.map((type) => (
-                      <div key={type.name} className="type-badge">
-                        <span className="type-color-dot" style={{ background: type.color }}></span> {type.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <button className="primary-button small edit-btn" onClick={() => setShowEditEventTypesModal(true)}>Edit types</button>
+                <p style={{ color: 'var(--text-secondary)' }}>This section is currently under development.</p>
               </div>
             </div>
           )}

@@ -9,6 +9,8 @@ export default function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
+    // Set persistent auth state
+    localStorage.setItem('garaad_auth', 'true')
     // Navigate to default route on submit
     navigate('/')
   }
