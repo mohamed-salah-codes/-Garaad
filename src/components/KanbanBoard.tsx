@@ -37,6 +37,7 @@ export type KanbanBoardProps = {
   onCreateTask?: () => void
   onInlineCreateTask?: (title: string, estimated: string, type: string, status: string) => void
   onTaskDropToCompleted?: (task: KanbanTask, pendingColumns: KanbanColumnLegacy[]) => void
+  onTaskClick?: (task: KanbanTask) => void
 }
 
 const COLUMN_HEADER_CLASS_MAP: Record<string, string> = {
@@ -53,7 +54,7 @@ const COLUMN_DOT_CLASS_MAP: Record<string, string> = {
   'Completed': 'completed',
 }
 
-export function KanbanBoard({ columns, onColumnsChange, onCreateTask, onInlineCreateTask, onTaskDropToCompleted }: KanbanBoardProps) {
+export function KanbanBoard({ columns, onColumnsChange, onCreateTask, onInlineCreateTask, onTaskDropToCompleted, onTaskClick }: KanbanBoardProps) {
   const [inlineCreateColumnId, setInlineCreateColumnId] = useState<string | null>(null)
   const [inlineTaskTitle, setInlineTaskTitle] = useState('')
   const [inlineTaskEstimated, setInlineTaskEstimated] = useState('')
@@ -170,6 +171,7 @@ export function KanbanBoard({ columns, onColumnsChange, onCreateTask, onInlineCr
                               className={`kanban-task ${
                                 snapshot.isDragging ? 'dragging' : ''
                               } ${snapshot.isDragging ? 'dragged' : ''} task-status-${column.name.toLowerCase().replace(' ', '-')}`}
+                              onClick={() => !snapshot.isDragging && onTaskClick?.(task)}
                             >
                               <div className="kanban-task-header">
                                 <div

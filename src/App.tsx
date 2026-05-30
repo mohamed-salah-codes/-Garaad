@@ -320,6 +320,7 @@ function ProjectLayout() {
   }
   const [tasks, setTasks] = useState(initialTasks)
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null)
   const [showFormatDropdown, setShowFormatDropdown] = useState(false)
   const [textFormat, setTextFormat] = useState('Normal text')
   
@@ -1246,6 +1247,10 @@ function ProjectLayout() {
                     onColumnsChange={handleKanbanColumnsChange}
                     onCreateTask={openCreateTask}
                     onTaskDropToCompleted={handleTaskDropToCompleted}
+                    onTaskClick={(kanbanTask) => {
+                      const fullTask = tasks.find(t => t.id === kanbanTask.id) || null
+                      setSelectedTask(fullTask)
+                    }}
                     onInlineCreateTask={(title, estimated, type, status) => {
                       const newTask: TaskItem = {
                         id: `t${Date.now()}`,
@@ -1575,6 +1580,169 @@ function ProjectLayout() {
               <button type="button" className="primary-button" onClick={createTask}>
                 Create task
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedTask && (
+        <div className="task-details-overlay" onClick={() => setSelectedTask(null)}>
+          <div className="task-details-panel" onClick={e => e.stopPropagation()}>
+            {/* Panel Header */}
+            <div className="task-details-header">
+              <div className="task-details-breadcrumb">
+                <span>{currentProject?.name || 'Project'}</span>
+                <span className="breadcrumb-sep">/</span>
+                <span>{selectedTask.title}</span>
+              </div>
+              <div className="task-details-header-actions">
+                <button className="task-details-icon-btn" title="More options">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+                <button className="task-details-icon-btn" title="Copy link">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                </button>
+                <button className="task-details-close-btn" onClick={() => setSelectedTask(null)}>✕</button>
+              </div>
+            </div>
+
+            <div className="task-details-body">
+              {/* Left content */}
+              <div className="task-details-left">
+                <h1 className="task-details-title">{selectedTask.title}</h1>
+
+                {/* Meta fields */}
+                <div className="task-details-fields">
+                  <div className="task-details-field">
+                    <span className="field-label">Status</span>
+                    <div className="field-value">
+                      <span className={`task-status-pill status-pill-${selectedTask.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                        {selectedTask.status === 'In Progress' && '🛠'}
+                        {selectedTask.status === 'New Task' && '🆕'}
+                        {selectedTask.status === 'Scheduled' && '📅'}
+                        {selectedTask.status === 'Completed' && '✅'}
+                        {' '}{selectedTask.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Type</span>
+                    <div className="field-value">
+                      <span className="type-color-dot" style={{ backgroundColor: '#0d9488' }}></span>
+                      {selectedTask.type}
+                    </div>
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Due date</span>
+                    <div className="field-value">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      {selectedTask.due}
+                    </div>
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Assignee</span>
+                    <div className="field-value">
+                      <div className="task-details-avatar">{selectedTask.assigneeAvatar}</div>
+                      {selectedTask.assignee}
+                    </div>
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Estimated time</span>
+                    <div className="field-value">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <strong>{selectedTask.estimatedHours}h</strong>
+                      {selectedTask.actualHours !== undefined && (
+                        <span className="logged-time"> (logged {selectedTask.actualHours}h)</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="task-details-field">
+                    <span className="field-label">Priority</span>
+                    <div className="field-value">{selectedTask.priority}</div>
+                  </div>
+                  {selectedTask.tags.length > 0 && (
+                    <div className="task-details-field">
+                      <span className="field-label">Tags</span>
+                      <div className="field-value task-tags-row">
+                        {selectedTask.tags.map(tag => (
+                          <span key={tag} className="task-tag-chip">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="task-details-actions">
+                  <button className="task-action-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    Add subtask
+                  </button>
+                  <button className="task-action-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                    Attach file
+                  </button>
+                  <button className="task-action-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Start timer
+                  </button>
+                  <button className="task-action-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    Log time
+                  </button>
+                </div>
+
+                {/* Description */}
+                <div className="task-details-description-section">
+                  <div className="description-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Description
+                  </div>
+                  <p className="task-details-description-text">
+                    {selectedTask.description || 'Task description'}
+                  </p>
+                </div>
+
+                {/* Subtasks */}
+                {selectedTask.subtasks && selectedTask.subtasks.length > 0 && (
+                  <div className="task-details-subtasks-section">
+                    <div className="description-header">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                      Subtasks ({selectedTask.subtasks.length})
+                    </div>
+                    <div className="subtasks-list">
+                      {selectedTask.subtasks.map((st: any) => (
+                        <div key={st.id} className="subtask-item">
+                          <span className={`subtask-dot ${st.done ? 'done' : ''}`}></span>
+                          <span className={st.done ? 'subtask-done-text' : ''}>{st.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Scheduled Work */}
+                <div className="task-details-scheduled-section">
+                  <div className="description-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Scheduled work <span className="scheduled-count">0</span>
+                  </div>
+                  <p className="no-work-text">No upcoming work</p>
+                  <button className="add-scheduled-work">+ Schedule more work</button>
+                </div>
+              </div>
+
+              {/* Right: activity feed */}
+              <div className="task-details-right">
+                <div className="task-chat-messages"></div>
+                <div className="task-chat-input-row">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  <input className="task-chat-input" placeholder="Type a message..." />
+                  <button className="task-chat-send">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
