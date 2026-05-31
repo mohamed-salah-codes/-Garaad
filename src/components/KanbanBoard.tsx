@@ -16,6 +16,7 @@ export type KanbanTask = {
   actualHours?: number
   completedAt?: string
   assigneeAvatar?: string
+  commentCount?: number
 }
 
 export type KanbanColumn = {
@@ -206,6 +207,11 @@ export function KanbanBoard({ columns, onColumnsChange, onCreateTask, onInlineCr
                                     ) : (
                                       <span>{task.estimatedHours}h</span>
                                     )}
+                                  </div>
+                                )}
+                                {(task.commentCount !== undefined && task.commentCount > 0) && (
+                                  <div className="kanban-task-metrics" style={{ marginLeft: '6px' }}>
+                                    <span>💬 {task.commentCount}</span>
                                   </div>
                                 )}
                               </div>

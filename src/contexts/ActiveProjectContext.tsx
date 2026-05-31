@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export type Folder = {
   id: string;
@@ -20,9 +21,9 @@ type ActiveProjectContextType = {
   currentProject: Project | null;
   setCurrentProject: (project: Project | null) => void;
   projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  setProjects: (value: Project[] | ((val: Project[]) => Project[])) => Promise<void>;
   folders: Folder[];
-  setFolders: React.Dispatch<React.SetStateAction<Folder[]>>;
+  setFolders: (value: Folder[] | ((val: Folder[]) => Folder[])) => Promise<void>;
 };
 
 const ActiveProjectContext = createContext<ActiveProjectContextType | undefined>(undefined);
@@ -55,39 +56,16 @@ const defaultFolders: Folder[] = [
   { id: 'f1', name: 'p' }
 ];
 
-function loadFromStorage<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) return JSON.parse(raw) as T;
-  } catch {
-    // ignore parse errors
-  }
-  return fallback;
-}
-
 export const ActiveProjectProvider = ({ children }: { children: ReactNode }) => {
-  const [projects, setProjects] = useState<Project[]>(() =>
-    loadFromStorage('garaad_projects', defaultProjects)
-  );
-  const [folders, setFolders] = useState<Folder[]>(() =>
-    loadFromStorage('garaad_folders', defaultFolders)
-  );
-  const [currentProject, setCurrentProject] = useState<Project | null>(
-    () => {
-      const stored = loadFromStorage<Project[]>('garaad_projects', defaultProjects);
-      return stored[0] || null;
+  const [projects, setProjects] = useLocalStorage<Project[]>('garaad_projects', defaultProjects);
+  const [folders, setFolders] = useLocalStorage<Folder[]>('garaad_folders', defaultFolders);
+  const [currentProject, setCurrentProject] = useState<Project | null>(projects[0] || null);
+
+  useEffect(() => {
+    if (!currentProject && projects.length > 0) {
+      setCurrentProject(projects[0]);
     }
-  );
-
-  // Persist projects to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('garaad_projects', JSON.stringify(projects));
-  }, [projects]);
-
-  // Persist folders to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('garaad_folders', JSON.stringify(folders));
-  }, [folders]);
+  }, [projects, currentProject]);
 
   return (
     <ActiveProjectContext.Provider value={{ currentProject, setCurrentProject, projects, setProjects, folders, setFolders }}>

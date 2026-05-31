@@ -1,0 +1,291 @@
+/* ProjectReports.css */
+
+.project-reports {
+  padding: 24px 28px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
+.pr-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pr-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+  margin: 0 0 6px;
+}
+
+.pr-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pr-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pr-export-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  transition: all 0.18s;
+}
+.pr-export-btn:hover { background: var(--hover, #f1f5f9); }
+.pr-export-btn.primary {
+  background: #7C3AED;
+  color: #fff;
+  border-color: transparent;
+}
+.pr-export-btn.primary:hover { background: #6d28d9; }
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────────── */
+.pr-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 24px;
+}
+
+.pr-tab {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #64748b);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.18s;
+}
+.pr-tab:hover { color: var(--text, #0f172a); }
+.pr-tab.active {
+  color: #7C3AED;
+  border-bottom-color: #7C3AED;
+}
+
+/* ─── KPI Grid ───────────────────────────────────────────────────────────────── */
+.pr-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.pr-kpi-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.pr-kpi-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  transform: translateY(-2px);
+}
+
+.pr-kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pr-kpi-label {
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+  margin-top: 6px;
+}
+
+/* ─── Progress Bar ───────────────────────────────────────────────────────────── */
+.pr-progress-bar-container {
+  height: 14px;
+  background: var(--surface-alt, #f1f5f9);
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.pr-progress-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 1s ease;
+}
+
+.pr-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary, #64748b);
+  margin-top: 6px;
+}
+
+/* ─── Section ────────────────────────────────────────────────────────────────── */
+.pr-section {
+  margin-bottom: 24px;
+}
+
+.pr-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  margin: 0 0 12px;
+}
+
+/* ─── Chart Card ─────────────────────────────────────────────────────────────── */
+.pr-chart-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.pr-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  color: var(--text-secondary, #64748b);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ─── Stats Card ─────────────────────────────────────────────────────────────── */
+.pr-stats-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pr-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+.pr-stat-row:last-child { border-bottom: none; }
+
+.pr-stat-label {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+}
+
+.pr-stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+}
+
+/* ─── Time Grid ──────────────────────────────────────────────────────────────── */
+.pr-time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.pr-time-card {
+  background: var(--surface, #fff);
+  border: 2px solid;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.pr-time-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  font-size: 20px;
+}
+
+.pr-time-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pr-time-label {
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+  margin-top: 6px;
+}
+
+/* ─── Efficiency Box ─────────────────────────────────────────────────────────── */
+.pr-efficiency-box {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--text, #0f172a);
+  line-height: 1.6;
+}
+
+/* ─── Insights ───────────────────────────────────────────────────────────────── */
+.pr-insight-card {
+  background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, rgba(6,182,212,0.06) 100%);
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.pr-insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pr-insight-header span { font-size: 20px; }
+.pr-insight-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  margin: 0;
+}
+
+.pr-insight-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pr-insight-list li {
+  font-size: 13px;
+  color: var(--text, #0f172a);
+  padding: 9px 14px;
+  background: var(--surface, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+@media (max-width: 600px) {
+  .project-reports { padding: 16px; }
+  .pr-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .pr-time-grid { grid-template-columns: 1fr; }
+}

@@ -4,6 +4,9 @@ import KanbanBoard, { type KanbanColumnLegacy, type KanbanTask } from './compone
 import { useActiveProject } from './contexts/ActiveProjectContext'
 import { ICON_CATEGORIES, getIconById } from './constants/iconLibrary'
 import Login from './pages/Login'
+import GlobalReports from './pages/GlobalReports'
+import ProjectReports from './components/ProjectReports'
+import ProfileSettings from './components/ProfileSettings'
 import { useLocalStorage } from './hooks/useLocalStorage'
 
 
@@ -51,7 +54,7 @@ function FolderSVG({ color = '#3b82f6', icon = 'default', size = 16 }: { color?:
 }
 
 
-type PageKey = 'projects' | 'tasks' | 'calendar' | 'notes' | 'settings'
+type PageKey = 'projects' | 'tasks' | 'calendar' | 'notes' | 'settings' | 'reports'
 
 type NoteItem = {
   id: string
@@ -71,6 +74,7 @@ type Subtask = {
 
 type TaskComment = {
   id: string
+  taskId: string
   author: string
   text: string
   timestamp: string
@@ -104,6 +108,7 @@ const projectSections: Array<{ key: PageKey; label: string }> = [
   { key: 'tasks', label: 'Tasks' },
   { key: 'calendar', label: 'Calendar' },
   { key: 'notes', label: 'Notes' },
+  { key: 'reports', label: 'Reports' },
   { key: 'settings', label: 'Settings' },
 ]
 
@@ -248,16 +253,90 @@ const getKanbanColumnsFromTasks = (taskList: TaskItem[]): KanbanColumnLegacy[] =
     color: meta.color,
     tasks: taskList
       .filter((task) => task.status === meta.name)
-      .map((task) => ({ id: task.id, title: task.title, label: task.type, estimatedHours: task.estimatedHours, actualHours: task.actualHours, assigneeAvatar: task.assigneeAvatar })),
+      .map((task) => ({ 
+        id: task.id, 
+        title: task.title, 
+        label: task.type, 
+        estimatedHours: task.estimatedHours, 
+        actualHours: task.actualHours, 
+        assigneeAvatar: task.assigneeAvatar,
+        commentCount: task.comments?.length || 0 
+      })),
   }))
 
+import { useAuthStore } from './store/useAuthStore'
+import { useSyncStore } from './store/useSyncStore'
+import GlobalLayout from './components/GlobalLayout'
+
 export default function App() {
+  const { isInitialized, initialize, session } = useAuthStore()
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
+
+  if (!isInitialized) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/project/p1/tasks" replace />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/project/:projectId/:pageKey" element={<ProjectLayout />} />
+      <Route element={<GlobalLayout />}>
+        <Route path="/" element={session ? <Navigate to="/project/p1/tasks" replace /> : <Navigate to="/login" replace />} />
+        <Route path="/reports" element={<GlobalReportsWrapper />} />
+        <Route path="/project/:projectId/:pageKey" element={<ProjectLayout />} />
+      </Route>
     </Routes>
+  )
+}
+
+function GlobalReportsWrapper() {
+  const { session, user } = useAuthStore()
+  const navigate = useNavigate()
+  const [tasks] = useLocalStorage<TaskItem[]>('garaad_tasks', [])
+  const { projects } = useActiveProject()
+
+  useEffect(() => {
+    if (!session) navigate('/login', { replace: true })
+  }, [session, navigate])
+
+  const rawTasks = tasks.map(t => ({
+    id: t.id,
+    status: t.status,
+    priority: t.priority,
+    due_date: t.due,
+    created_at: t.createdAt,
+    completed_at: t.completedAt,
+    estimated_hours: t.estimatedHours,
+    actual_hours: t.actualHours,
+    project_id: t.projectId,
+    type: t.type,
+  }))
+
+  const rawProjects = projects.map(p => ({
+    id: p.id,
+    name: p.name,
+    status: p.status,
+    progress: p.progress,
+    created_at: (p as any).created_at || new Date().toISOString(),
+    updated_at: (p as any).updated_at || new Date().toISOString(),
+  }))
+
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'
+
+  return (
+    <div style={{ 
+      background: '#0b1220', 
+      minHeight: '100vh', 
+      width: '100%', 
+      overflowY: 'auto'
+    }}>
+      <GlobalReports
+        tasks={rawTasks}
+        projects={rawProjects}
+        userName={userName}
+        userEmail={user?.email || ''}
+      />
+    </div>
   )
 }
 
@@ -266,13 +345,13 @@ function ProjectLayout() {
   const navigate = useNavigate()
   const { currentProject, setCurrentProject, projects, setProjects, folders, setFolders } = useActiveProject()
   
-  const [isAuthenticated] = useLocalStorage('garaad_auth', false)
+  const { session } = useAuthStore()
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!session) {
       navigate('/login', { replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [session, navigate])
 
   useEffect(() => {
     const proj = projects.find((p) => p.id === projectId)
@@ -293,6 +372,8 @@ function ProjectLayout() {
   const [notes, setNotes] = useLocalStorage<NoteItem[]>('garaad_notes', notesSeed)
   const [selectedNoteId, setSelectedNoteId] = useState(notesSeed[0].id)
   const editorRef = useRef<HTMLDivElement>(null)
+  const [noteCategory, setNoteCategory] = useState<string>('All')
+  const [noteSearch, setNoteSearch] = useState<string>('')
 
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
@@ -329,20 +410,6 @@ function ProjectLayout() {
     return () => document.removeEventListener('click', closeMenus)
   }, [])
 
-  const [noteSearch] = useState('')
-  const [noteCategory] = useState('All')
-  const [themeMode, setThemeMode] = useState<'Light' | 'Dark'>(() => {
-    try { return (localStorage.getItem('garaad_theme') as 'Light' | 'Dark') || 'Dark' } catch { return 'Dark' }
-  })
-
-  const toggleTheme = () => {
-    setThemeMode(prev => {
-      const next = prev === 'Dark' ? 'Light' : 'Dark'
-      try { localStorage.setItem('garaad_theme', next) } catch {}
-      return next
-    })
-  }
-  
   const [tasks, setTasks] = useLocalStorage<TaskItem[]>('garaad_tasks', initialTasks)
   const [userProfile, setUserProfile] = useLocalStorage('garaad_profile', {
     firstName: 'MOHAMED',
@@ -443,6 +510,19 @@ function ProjectLayout() {
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [pickerViewDate, setPickerViewDate] = useState(new Date())
+
+  // Timer State
+  const [activeTimer, setActiveTimer] = useLocalStorage<{ taskId: string; startTime: number; elapsedSeconds: number; isPaused: boolean } | null>('garaad_active_timer', null)
+  const [ticker, setTicker] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeTimer && !activeTimer.isPaused) {
+        setTicker(t => t + 1)
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [activeTimer])
 
   const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev => ({ ...prev, [folderId]: !prev[folderId] }))
@@ -826,226 +906,36 @@ function ProjectLayout() {
   )
 
   return (
-    <div className={`app-shell ${themeMode === 'Dark' ? 'dark-mode' : ''} ${activePage === 'settings' ? 'settings-active' : ''}`}>
-      {activePage !== 'settings' && (
-        <aside className="sidebar">
-          <div className="sidebar-profile" onClick={(e) => { e.stopPropagation(); setProfileMenuOpen(!profileMenuOpen); }} style={{ cursor: 'pointer', position: 'relative' }}>
-            <div className="profile-avatar">{userProfile.firstName.charAt(0) || 'M'}</div>
-            <div className="profile-meta">
-              <div className="profile-title">{userProfile.firstName} {userProfile.lastName}</div>
-              <div className="profile-subtitle">Project management</div>
-            </div>
-            {profileMenuOpen && (
-              <div className="profile-dropdown-menu" style={{ position: 'absolute', bottom: '100%', left: '0', width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', zIndex: 10, marginBottom: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                <button 
-                  className="menu-item" 
-                  style={{ width: '100%', textAlign: 'left', color: 'var(--danger)', padding: '8px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 500 }}
-                  onClick={() => {
-                    localStorage.removeItem('garaad_auth')
-                    navigate('/login', { replace: true })
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
-                  onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  Log out
-                </button>
-              </div>
-            )}
-          </div>
-
-        <div className="sidebar-section project-list-section">
-          <div className="section-header" style={{ position: 'relative' }}>
-            <span>Projects</span>
-            <button 
-              type="button" 
-              className="icon-button" 
-              aria-label="New project"
-              onClick={(e) => { e.stopPropagation(); setIsAddMenuOpen(!isAddMenuOpen); }}
-            >
-              +
-            </button>
-            {isAddMenuOpen && (
-              <div className="sidebar-dropdown-menu" onClick={e => e.stopPropagation()}>
-                <button className="sidebar-dropdown-item" onClick={() => handleCreateProject()}>
-                  <span style={{ border: '1px solid currentColor', borderRadius: '4px', width: '16px', height: '16px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>+</span> 
-                  Create project
-                </button>
-                <button className="sidebar-dropdown-item" onClick={handleCreateFolder}>
-                  <span style={{ display: 'flex', alignItems: 'center', color: '#6b7280' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-                    </svg>
-                  </span>
-                  Create folder
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="project-list">
-            {folders.map(folder => {
-              const folderProjects = projects.filter(p => p.folderId === folder.id);
-              const isExpanded = expandedFolders[folder.id];
-              return (
-                <div key={folder.id} className="sidebar-folder">
-                  <div className={`folder-header ${isExpanded ? 'expanded' : ''}`} style={{ position: 'relative' }} onClick={() => toggleFolder(folder.id)}>
-                    <span className="folder-arrow" style={{ display: 'inline-flex', alignItems: 'center', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </span>
-                    <span className="folder-icon" style={{ display: 'flex', alignItems: 'center' }}>
-                      <FolderSVG color={folder.color} icon={folder.icon} size={18} />
-                    </span>
-                    <span className="folder-name">{folder.name}</span>
-                    <button 
-                      className="folder-menu-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFolderMenuOpenId(folderMenuOpenId === folder.id ? null : folder.id);
-                      }}
-                    >⋮</button>
-                    {folderMenuOpenId === folder.id && (
-                      <div className="sidebar-dropdown-menu" onClick={e => e.stopPropagation()}>
-                          <button className="sidebar-dropdown-item" onClick={() => handleCreateProject(folder.id)}>
-                            <span style={{ border: '1px solid currentColor', borderRadius: '4px', width: '16px', height: '16px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>+</span> 
-                            Create project
-                          </button>
-                          <button className="sidebar-dropdown-item" onClick={() => { setFolderToRename(folder); setFolderMenuOpenId(null); }}>
-                            <span>✏️</span>
-                            Rename folder
-                          </button>
-                          <button className="sidebar-dropdown-item" onClick={() => { setCustomizeFolder(folder); setFolderMenuOpenId(null); }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-                            </span>
-                            Customize folder
-                          </button>
-                          <button className="sidebar-dropdown-item danger" onClick={() => handleDeleteFolder(folder)}>
-                            <span>🗑️</span>
-                            Delete folder
-                          </button>
-                        </div>
-                      )}
-                  </div>
-                  {isExpanded && (
-                    <div className="folder-projects">
-                      {folderProjects.map(project => (
-                        <button
-                          key={project.id}
-                          type="button"
-                          className={`project-link ${selectedProjectId === project.id ? 'active' : ''}`}
-                          onClick={() => setSelectedProjectId(project.id)}
-                        >
-                          <span>{project.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-            
-            {/* Root-level projects */}
-            {projects.filter(p => !p.folderId).map((project) => (
-              <button
-                key={project.id}
-                type="button"
-                className={`project-link ${selectedProjectId === project.id ? 'active' : ''}`}
-                onClick={() => setSelectedProjectId(project.id)}
-              >
-                <span>{project.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-          {/* Theme Toggle Button */}
-          <div style={{ marginTop: 'auto', padding: '12px 4px 0' }}>
-            <button
-              onClick={toggleTheme}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'var(--surface-muted)',
-                color: 'var(--text)',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                transition: 'background 0.2s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-muted)')}
-            >
-              <span style={{ fontSize: '18px', lineHeight: 1 }}>
-                {themeMode === 'Dark' ? '☀️' : '🌙'}
-              </span>
-              <span>{themeMode === 'Dark' ? 'Light mode' : 'Dark mode'}</span>
-            </button>
-          </div>
-      </aside>
-      )}
-
+    <>
       <div className={`content ${activePage === 'settings' ? 'settings-content-area' : ''} ${activePage === 'notes' ? 'notes-content-area' : ''}`}>
-        {activePage === 'settings' ? (
-          <>
-            <header className="topbar settings-topbar">
-              <h1>Project settings</h1>
-            </header>
-            
-            <div className="settings-tabs-container">
-              <button 
-                className={`settings-tab ${settingsTab === 'My profile' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('My profile')}
-              >
-                My profile
-              </button>
-              <button 
-                className={`settings-tab ${settingsTab === 'Preferences' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('Preferences')}
-              >
-                Preferences
-              </button>
-              <button 
-                className={`settings-tab ${settingsTab === 'Integrations' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('Integrations')}
-              >
-                Integrations
-              </button>
-              <button 
-                className={`settings-tab ${settingsTab === 'Security' ? 'active' : ''}`}
-                onClick={() => setSettingsTab('Security')}
-              >
-                Security
-              </button>
+      {activePage === 'settings' ? (
+        <>
+          <div className="settings-tabs-container" style={{ marginTop: '20px' }}>
+            <button 
+              className={`settings-tab ${settingsTab === 'My profile' ? 'active' : ''}`}
+              onClick={() => setSettingsTab('My profile')}
+            >
+              My profile
+            </button>
+            <button 
+              className={`settings-tab ${settingsTab === 'Security' ? 'active' : ''}`}
+              onClick={() => setSettingsTab('Security')}
+            >
+              Security
+            </button>
+          </div>
+          
+          <div style={{ padding: '24px 32px' }}>
+            <ProfileSettings activeTab={settingsTab as any} />
+          </div>
+        </>
+      ) : (
+        <>
+          {activePage === 'notes' && (
+            <div className="notes-topbar-left" style={{ padding: '16px 24px' }}>
+              <button className="primary-button notes-add-btn" onClick={addNote}>+ Add new</button>
             </div>
-          </>
-        ) : (
-          <>
-            {activePage === 'notes' ? (
-              <header className="topbar notes-page-topbar">
-                <div className="notes-topbar-left">
-                  <button className="primary-button notes-add-btn" onClick={addNote}>+ Add new</button>
-                </div>
-              </header>
-            ) : (
-              <header className="topbar">
-                <div>
-                  <p className="breadcrumb">Project / {selectedProject?.name ?? 'Select a project'}</p>
-                  <h1>{selectedProject?.name ?? 'Select a project'}</h1>
-                </div>
-                <div className="topbar-actions">
-                  <button className="ghost-button">Search notes</button>
-                  <button className="primary-button" onClick={activePage === 'tasks' ? openCreateTask : undefined}>
-                    {activePage === 'tasks' ? 'New task' : 'New item'}
-                  </button>
-                </div>
-              </header>
-            )}
+          )}
 
             {activePage !== 'notes' && (
               <div className="project-menu">
@@ -1467,132 +1357,39 @@ function ProjectLayout() {
             </div>
           )}
 
-          {activePage === 'settings' && settingsTab === 'My profile' && (
-            <div className="configuration-page">
-              <div className="profile-settings-container">
-                <div className="profile-header-card">
-                  <div className="profile-avatar-large">
-                    {userProfile.firstName.charAt(0) || 'M'}
-                    <button className="avatar-edit-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    </button>
-                  </div>
-                  <div className="profile-header-info">
-                    <h2>{userProfile.firstName} {userProfile.lastName}</h2>
-                    <p>{userProfile.email} <button className="text-btn">change email</button></p>
-                  </div>
-                </div>
 
-                <div className="profile-fields-grid">
-                  <div className="form-group">
-                    <label>First name</label>
-                    <input 
-                      type="text" 
-                      value={userProfile.firstName} 
-                      onChange={(e) => setUserProfile({...userProfile, firstName: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Last name</label>
-                    <input 
-                      type="text" 
-                      value={userProfile.lastName} 
-                      onChange={(e) => setUserProfile({...userProfile, lastName: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Country</label>
-                    <select 
-                      value={userProfile.country}
-                      onChange={(e) => setUserProfile({...userProfile, country: e.target.value})}
-                    >
-                      <option value="">Country</option>
-                      <option value="US">United States</option>
-                      <option value="SO">Somalia</option>
-                      <option value="UK">United Kingdom</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <div className="phone-input-group">
-                      <div className="phone-prefix">+000</div>
-                      <input 
-                        type="text" 
-                        placeholder="000 000 00 00" 
-                        value={userProfile.phone}
-                        onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Birthday</label>
-                    <div className="birthday-inputs">
-                      <select><option>Day</option></select>
-                      <select><option>Month</option></select>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="settings-actions">
-                  <button 
-                    className="primary-button settings-save-btn"
-                    onClick={() => {
-                      if (!navigator.onLine) {
-                        alert('Fadlan khadka internet-ka hubi. Profile-ka offline laguma beddeli karo.')
-                      } else {
-                        alert('Profile saved successfully!')
-                      }
-                    }}
-                  >
-                    Save
-                  </button>
-                </div>
-
-                <div className="config-section delete-account-section">
-                  <h3>Delete account</h3>
-                  <p className="settings-warning-text">
-                    After deleting your account you will lose all related information<br/>
-                    including tasks, events, projects, notes etc. You will not be able<br/>
-                    to recover it later, so think twice before doing this.
-                  </p>
-                  <button className="danger-text-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    Delete account
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePage === 'settings' && settingsTab === 'Security' && (
-            <div className="configuration-page">
-              <div className="profile-settings-container security-container">
-                <div className="form-group max-w-sm">
-                  <label>Current password</label>
-                  <input type="password" />
-                </div>
-                <div className="form-group max-w-sm">
-                  <label>New password</label>
-                  <input type="password" />
-                </div>
-                <div className="form-group max-w-sm">
-                  <label>Confirm new password</label>
-                  <input type="password" />
-                </div>
-                <div className="settings-actions mt-4">
-                  <button className="primary-button settings-save-btn">Change password</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePage === 'settings' && (settingsTab === 'Preferences' || settingsTab === 'Integrations') && (
-            <div className="configuration-page">
-              <div className="config-section">
-                <p style={{ color: 'var(--text-secondary)' }}>This section is currently under development.</p>
-              </div>
-            </div>
-          )}
+          {activePage === 'reports' && (() => {
+            const rawTasks = tasks.map(t => ({
+              id: t.id,
+              status: t.status,
+              priority: t.priority,
+              due_date: t.due,
+              created_at: t.createdAt,
+              completed_at: t.completedAt,
+              estimated_hours: t.estimatedHours,
+              actual_hours: t.actualHours,
+              project_id: t.projectId,
+              type: t.type,
+            }))
+            const rawProjects = projects.map(p => ({
+              id: p.id,
+              name: p.name,
+              status: p.status,
+              progress: p.progress,
+              created_at: (p as any).created_at || new Date().toISOString(),
+              updated_at: (p as any).updated_at || new Date().toISOString(),
+            }))
+            return (
+              <ProjectReports
+                projectId={selectedProjectId}
+                projectName={selectedProject?.name || 'Project'}
+                projectStatus={selectedProject?.status || 'Active'}
+                allTasks={rawTasks}
+                allProjects={rawProjects}
+              />
+            )
+          })()}
 
         </section>
       </div>
@@ -1881,14 +1678,62 @@ function ProjectLayout() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                     Attach file
                   </button>
-                  <button className="task-action-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Start timer
-                  </button>
-                  <button className="task-action-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                    Log time
-                  </button>
+                  
+                  {/* Timer Logic */}
+                  {(() => {
+                    const isTimerActiveForThisTask = activeTimer && activeTimer.taskId === selectedTask.id;
+                    let displaySeconds = 0;
+                    if (isTimerActiveForThisTask) {
+                      displaySeconds = activeTimer.elapsedSeconds;
+                      if (!activeTimer.isPaused) {
+                        displaySeconds += Math.floor((Date.now() - activeTimer.startTime) / 1000);
+                      }
+                    }
+                    
+                    const formatTime = (secs: number) => {
+                      const h = Math.floor(secs / 3600);
+                      const m = Math.floor((secs % 3600) / 60);
+                      const s = secs % 60;
+                      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    }
+
+                    if (!isTimerActiveForThisTask) {
+                      return (
+                        <button className="task-action-btn" onClick={() => setActiveTimer({ taskId: selectedTask.id, startTime: Date.now(), elapsedSeconds: 0, isPaused: false })}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                          Start timer
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <div className="timer-display" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-muted)', padding: '4px 12px', borderRadius: '6px', fontSize: '0.9rem', fontWeight: 600, fontFamily: 'monospace' }}>
+                          <span style={{ color: activeTimer.isPaused ? 'var(--warning)' : 'var(--success)' }}>●</span>
+                          {formatTime(displaySeconds)}
+                        </div>
+                        {activeTimer.isPaused ? (
+                          <button className="task-action-btn" onClick={() => setActiveTimer({ ...activeTimer, startTime: Date.now(), isPaused: false })}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Resume
+                          </button>
+                        ) : (
+                          <button className="task-action-btn" onClick={() => setActiveTimer({ ...activeTimer, elapsedSeconds: displaySeconds, isPaused: true })}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            Pause
+                          </button>
+                        )}
+                        <button className="task-action-btn" style={{ color: 'var(--danger)' }} onClick={() => {
+                          const hoursToAdd = parseFloat((displaySeconds / 3600).toFixed(2));
+                          handleUpdateSelectedTask({ actualHours: (selectedTask.actualHours || 0) + hoursToAdd });
+                          setActiveTimer(null);
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                          Stop & Save
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Description */}
@@ -2009,7 +1854,8 @@ function ProjectLayout() {
                   
                   const newComment: TaskComment = {
                     id: `c${Date.now()}`,
-                    author: 'Me',
+                    taskId: selectedTask.id,
+                    author: userProfile.firstName + ' ' + userProfile.lastName,
                     text: chatInputValue,
                     timestamp: time,
                     date: date
@@ -2955,7 +2801,7 @@ function ProjectLayout() {
         </div>
       )}
 
-    </div>
+    </>
   )
 }
 

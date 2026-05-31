@@ -5,12 +5,16 @@ import './index.css'
 import App from './App.tsx'
 import { ActiveProjectProvider } from './contexts/ActiveProjectContext.tsx'
 
+import { ThemeProvider } from './contexts/ThemeContext'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <ActiveProjectProvider>
-        <App />
-      </ActiveProjectProvider>
+      <ThemeProvider>
+        <ActiveProjectProvider>
+          <App />
+        </ActiveProjectProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 )

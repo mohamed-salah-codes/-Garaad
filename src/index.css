@@ -1,25 +1,25 @@
 /* Base theme */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: clamp(12px, 0.8vw + 8px, 13px);
   line-height: 1.5;
   font-weight: 400;
-  background: #ffffff;
-  color: #0f172a;
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-strong: #f8fafc;
-  --surface-muted: #f1f5f9;
-  --surface-hover: #e8edf5;
-  --text: #0f172a;
-  --text-secondary: #64748b;
-  --text-inverse: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --border-transparent: rgba(15, 23, 42, 0.08);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+  background: #0B1220;
+  color: #FFFFFF;
+  --bg: #0B1220;
+  --surface: #111827;
+  --surface-strong: #0F172A; /* Sidebar */
+  --surface-muted: #1e293b;
+  --surface-hover: #334155;
+  --text: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-inverse: #0B1220;
+  --muted: #94A3B8;
+  --border: #1e293b;
+  --border-transparent: rgba(255, 255, 255, 0.08);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.2);
   --accent: #3b82f6;
   --accent-strong: #2563eb;
   --success: #10b981;
@@ -4630,4 +4630,56 @@ tbody td {
   .profile-fields-grid {
     grid-template-columns: 1fr;
   }
+}
+.sidebar-global-nav {
+  margin-top: 1rem;
+}
+
+.sidebar-global-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-global-nav-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.dropdown-menu-item:hover {
+  background: var(--surface-hover);
+}
+
+.dropdown-menu-item svg {
+  color: var(--text-secondary);
+}
+
+.dropdown-menu-item:hover svg {
+  color: currentColor;
 }
