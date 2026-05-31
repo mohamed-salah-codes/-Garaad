@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
@@ -53,7 +53,7 @@ export default function ProjectReports({
   allProjects,
 }: ProjectReportsProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'progress' | 'time'>('overview');
-  const { current, previous, insights } = useAnalytics(allTasks, allProjects, 'monthly', new Date(), projectId);
+  const { current, insights } = useAnalytics(allTasks, allProjects, 'monthly', new Date(), projectId);
 
   // Project-level task list
   const projectTasks = allTasks.filter(t => t.project_id === projectId);

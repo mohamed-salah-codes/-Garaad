@@ -163,7 +163,7 @@ const initialTasks: TaskItem[] = [
       { id: 's2', title: 'Style cards', done: false },
     ],
     comments: [
-      { id: 'c1', author: 'Me', text: 'kolkl', timestamp: '09:34', date: '30 May' }
+      { id: 'c1', taskId: 't1', author: 'Me', text: 'kolkl', timestamp: '09:34', date: '30 May' }
     ],
     projectId: 'p1',
     createdAt: new Date().toISOString(),
@@ -265,7 +265,6 @@ const getKanbanColumnsFromTasks = (taskList: TaskItem[]): KanbanColumnLegacy[] =
   }))
 
 import { useAuthStore } from './store/useAuthStore'
-import { useSyncStore } from './store/useSyncStore'
 import GlobalLayout from './components/GlobalLayout'
 
 export default function App() {
@@ -301,10 +300,12 @@ function GlobalReportsWrapper() {
 
   const rawTasks = tasks.map(t => ({
     id: t.id,
+    title: t.title,
     status: t.status,
     priority: t.priority,
     due_date: t.due,
     created_at: t.createdAt,
+    updated_at: t.completedAt || new Date().toISOString(),
     completed_at: t.completedAt,
     estimated_hours: t.estimatedHours,
     actual_hours: t.actualHours,
@@ -364,24 +365,22 @@ function ProjectLayout() {
   const setActivePage = (key: PageKey) => navigate(`/project/${projectId}/${key}`)
 
   const selectedProjectId = currentProject?.id ?? ''
-  const setSelectedProjectId = (id: string) => {
-    navigate(`/project/${id}/tasks`)
-  }
+
 
   const [projectView, setProjectView] = useState<'Table' | 'Kanban'>('Kanban')
   const [notes, setNotes] = useLocalStorage<NoteItem[]>('garaad_notes', notesSeed)
   const [selectedNoteId, setSelectedNoteId] = useState(notesSeed[0].id)
   const editorRef = useRef<HTMLDivElement>(null)
-  const [noteCategory, setNoteCategory] = useState<string>('All')
-  const [noteSearch, setNoteSearch] = useState<string>('')
-
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
-  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
+  const [noteCategory, _setNoteCategory] = useState<string>('All')
+  const [noteSearch, _setNoteSearch] = useState<string>('')
+  
+  const [_isAddMenuOpen, setIsAddMenuOpen] = useState(false)
+  const [_folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null)
   const [folderToRename, setFolderToRename] = useState<{id: string, name: string} | null>(null)
   const [folderToDelete, setFolderToDelete] = useState<{id: string, name: string} | null>(null)
   const [projectToDelete, setProjectToDelete] = useState<any | null>(null)
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ f1: true })
   const [createProjectModal, setCreateProjectModal] = useState<{ open: boolean; folderId?: string }>({ open: false })
+
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectNameError, setNewProjectNameError] = useState('')
   const [createFolderModal, setCreateFolderModal] = useState<{ open: boolean; name: string; color: string; icon: string; error?: string }>({ open: false, name: '', color: '#3b82f6', icon: 'default' })
@@ -411,7 +410,7 @@ function ProjectLayout() {
   }, [])
 
   const [tasks, setTasks] = useLocalStorage<TaskItem[]>('garaad_tasks', initialTasks)
-  const [userProfile, setUserProfile] = useLocalStorage('garaad_profile', {
+  const [userProfile, _setUserProfile] = useLocalStorage('garaad_profile', {
     firstName: 'MOHAMED',
     lastName: 'AHMED SALAH',
     email: 'm00252617466805@gmail.com',
@@ -419,6 +418,7 @@ function ProjectLayout() {
     phone: '',
     birthday: '',
   })
+
   
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null)
@@ -438,7 +438,7 @@ function ProjectLayout() {
   const [newTaskTags, setNewTaskTags] = useState<string[]>([])
   const [newSubtask, setNewSubtask] = useState('')
 
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [_profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState<'My profile' | 'Preferences' | 'Integrations' | 'Security'>('My profile')
   const [newTaskSubtasks, setNewTaskSubtasks] = useState<Subtask[]>([])
 
@@ -513,7 +513,7 @@ function ProjectLayout() {
 
   // Timer State
   const [activeTimer, setActiveTimer] = useLocalStorage<{ taskId: string; startTime: number; elapsedSeconds: number; isPaused: boolean } | null>('garaad_active_timer', null)
-  const [ticker, setTicker] = useState(0)
+  const [_ticker, setTicker] = useState(0)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -523,15 +523,6 @@ function ProjectLayout() {
     }, 1000)
     return () => clearInterval(interval)
   }, [activeTimer])
-
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders(prev => ({ ...prev, [folderId]: !prev[folderId] }))
-  }
-
-  const handleCreateFolder = () => {
-    setCreateFolderModal({ open: true, name: '', color: '#3b82f6', icon: 'default', error: undefined })
-    setIsAddMenuOpen(false)
-  }
 
   const submitCreateFolder = () => {
     const name = createFolderModal.name.trim()
@@ -543,21 +534,11 @@ function ProjectLayout() {
     }
     const newFolder = { id: `f${Date.now()}`, name, color: createFolderModal.color, icon: createFolderModal.icon }
     setFolders(prev => [...prev, newFolder])
-    setExpandedFolders(prev => ({ ...prev, [newFolder.id]: true }))
     setCreateFolderModal({ open: false, name: '', color: '#3b82f6', icon: 'default' })
-  }
-
-  const handleCreateProject = (folderId?: string) => {
-    setNewProjectName('')
-    setNewProjectNameError('')
-    setCreateProjectModal({ open: true, folderId })
-    setIsAddMenuOpen(false)
-    setFolderMenuOpenId(null)
   }
 
   const submitCreateProject = () => {
     const name = newProjectName.trim() || 'New Project'
-    // Uniqueness check within same folder (or root)
     const folderId = createProjectModal.folderId
     const isDuplicate = projects.some(p => p.folderId === folderId && p.name.toLowerCase() === name.toLowerCase())
     if (isDuplicate) {
@@ -576,11 +557,6 @@ function ProjectLayout() {
     setCreateProjectModal({ open: false })
     setNewProjectName('')
     navigate(`/project/${newProject.id}/tasks`)
-  }
-
-  const handleDeleteFolder = (folder: {id: string, name: string}) => {
-    setFolderToDelete(folder)
-    setFolderMenuOpenId(null)
   }
 
   const confirmDeleteFolder = () => {
@@ -1362,10 +1338,12 @@ function ProjectLayout() {
           {activePage === 'reports' && (() => {
             const rawTasks = tasks.map(t => ({
               id: t.id,
+              title: t.title,
               status: t.status,
               priority: t.priority,
               due_date: t.due,
               created_at: t.createdAt,
+              updated_at: t.completedAt || t.createdAt,
               completed_at: t.completedAt,
               estimated_hours: t.estimatedHours,
               actual_hours: t.actualHours,

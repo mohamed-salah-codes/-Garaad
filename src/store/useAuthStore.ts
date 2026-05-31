@@ -67,7 +67,7 @@ const createDefaultWorkspace = async (userId: string, fullName: string) => {
   }
 };
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   session: null,
   isInitialized: false,
@@ -144,7 +144,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   updateProfile: async (updates) => {
-    const { user } = useAuthStore.getState();
+    const { user } = get();
     if (!user) return { error: 'Not logged in' };
     
     try {
@@ -171,7 +171,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   uploadAvatar: async (file: File) => {
-    const { user } = useAuthStore.getState();
+    const { user } = get();
     if (!user) return { error: 'Not logged in', url: null };
 
     const fileExt = file.name.split('.').pop();

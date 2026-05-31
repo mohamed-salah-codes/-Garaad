@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
@@ -209,11 +209,6 @@ export default function GlobalReports({ tasks, projects, userName = 'User', user
     { name: 'Overdue', value: current.overdueTasks, color: '#EF4444' },
   ].filter(d => d.value > 0);
 
-  const projectBarData = current.tasksByProject.slice(0, 8).map((p, i) => ({
-    ...p,
-    fill: CHART_COLORS[i % CHART_COLORS.length],
-  }));
-
   // ── Project Reports ─────────────────────────────────────────────────────────
   const projectReports = useMemo(() => {
     if (!reportGenerated || !customStart || !customEnd) return [];
@@ -269,7 +264,7 @@ export default function GlobalReports({ tasks, projects, userName = 'User', user
       await captureAndAdd('pdf-projects');
       await captureAndAdd('pdf-ai');
 
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = (doc as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(148, 163, 184);
@@ -495,7 +490,7 @@ export default function GlobalReports({ tasks, projects, userName = 'User', user
           <div id="pdf-projects" className="gr-section">
             <SectionTitle>Project Reports</SectionTitle>
             <div className="gr-project-reports">
-              {projectReports.map(({ project, metrics }, i) => (
+              {projectReports.map(({ project, metrics }) => (
                 <div key={project.id} className="gr-project-report-card">
                   <div className="gr-pr-header">
                     <h4>{project.name}</h4>

@@ -4,7 +4,6 @@ import { useSyncStore } from '../store/useSyncStore';
 
 class SyncEngine {
   private isSyncing = false;
-  private syncInterval?: number;
 
   init() {
     window.addEventListener('online', () => this.handleOnline());
@@ -17,12 +16,7 @@ class SyncEngine {
       useSyncStore.getState().setStatus('offline');
     }
 
-    // Attempt periodic sync every 30 seconds if online
-    this.syncInterval = window.setInterval(() => {
-      if (navigator.onLine && !this.isSyncing) {
-        this.syncAll();
-      }
-    }, 30000);
+
   }
 
   private handleOnline() {

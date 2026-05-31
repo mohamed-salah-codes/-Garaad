@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
@@ -31,7 +31,7 @@ export default function GlobalLayout() {
 
   // Auto-collapse logic
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const handleInactivity = () => {
       if (autoCollapse && !isMobileSidebarOpen && !isSidebarCollapsed && window.innerWidth > 768) {

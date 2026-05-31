@@ -7,8 +7,7 @@ import { useMemo } from 'react';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   startOfQuarter, endOfQuarter, startOfYear, endOfYear,
   subDays, subWeeks, subMonths, subYears, subQuarters,
-  isWithinInterval, differenceInDays, format, parseISO, eachDayOfInterval,
-  eachWeekOfInterval } from 'date-fns';
+  isWithinInterval, differenceInDays, format, parseISO, eachDayOfInterval } from 'date-fns';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -25,6 +24,8 @@ export interface RawTask {
   actual_hours?: number;
   project_id?: string;
   type?: string;
+  title: string;
+  updated_at?: string;
 }
 
 export interface RawProject {

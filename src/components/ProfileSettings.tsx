@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
-import { useDataStore } from '../store/useDataStore';
+
 import { FiCamera, FiTrash2, FiEye, FiEyeOff } from 'react-icons/fi';
 import './ProfileSettings.css';
 
@@ -10,7 +10,6 @@ interface ProfileSettingsProps {
 
 export default function ProfileSettings({ activeTab }: ProfileSettingsProps) {
   const { user, updateProfile, updatePassword, uploadAvatar } = useAuthStore();
-  const { userProfile } = useDataStore();
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -33,11 +32,14 @@ export default function ProfileSettings({ activeTab }: ProfileSettingsProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    if (userProfile) {
-      setFirstName(userProfile.firstName || '');
-      setLastName(userProfile.lastName || '');
+    if (user && user.user_metadata) {
+      const fullName = user.user_metadata.full_name || '';
+      const parts = fullName.split(' ');
+      setFirstName(parts[0] || '');
+      setLastName(parts.slice(1).join(' ') || '');
+      setAvatarUrl(user.user_metadata.avatar_url || null);
     }
-  }, [userProfile]);
+  }, [user]);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -72,7 +74,6 @@ export default function ProfileSettings({ activeTab }: ProfileSettingsProps) {
     } else {
       showToast('Profile updated successfully', 'success');
       setSelectedAvatarFile(null);
-      useDataStore.getState().loadInitialData();
     }
     setLoading(false);
   };
